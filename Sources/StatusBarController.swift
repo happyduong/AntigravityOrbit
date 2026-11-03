@@ -390,15 +390,6 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
         autoRotateItem.isEnabled = hasActiveAccount
         menu.addItem(autoRotateItem)
 
-        let showAliasItem = NSMenuItem(
-            title: L10n.tr("menu.show_alias_title"),
-            action: #selector(toggleShowAccountAlias),
-            keyEquivalent: ""
-        )
-        showAliasItem.target = self
-        showAliasItem.state = ConfigManager.shared.config.showAccountAlias ? .on : .off
-        menu.addItem(showAliasItem)
-
         let rotateNowItem = NSMenuItem(title: L10n.tr("menu.rotate_now"), action: #selector(manualRotateNext), keyEquivalent: "r")
         rotateNowItem.target = self
         rotateNowItem.isEnabled = hasActiveAccount && (accountStatuses.count > 1)
@@ -514,13 +505,6 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
         ConfigManager.shared.toggleAutoRotate()
         rebuildMenu()
         SettingsWindowController.shared.syncRotationValues()
-    }
-
-    @objc private func toggleShowAccountAlias() {
-        ConfigManager.shared.toggleShowAccountAlias()
-        updateStatusBarDisplay()
-        rebuildMenu()
-        SettingsWindowController.shared.updateAccounts(accounts: self.accountStatuses)
     }
 
     @objc private func setThreshold(_ sender: NSMenuItem) {

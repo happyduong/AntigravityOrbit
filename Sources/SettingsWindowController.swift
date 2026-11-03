@@ -34,7 +34,6 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
     // Views for Tab 2: General & System
     private var generalView: NSView?
     private var languagePopUp: NSPopUpButton?
-    private var generalShowAliasCheckbox: NSButton?
     private var launchAtLoginCheckbox: NSButton?
     private var notificationsCheckbox: NSButton?
     private var soundCheckbox: NSButton?
@@ -370,7 +369,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         let padX: CGFloat = 28
         var currentY: CGFloat = frame.height - 34
 
-        // SECTION 0: Language & Display
+        // SECTION 0: Language
         let sec0Title = NSTextField(labelWithString: L10n.tr("settings.language_section"))
         sec0Title.font = NSFont.systemFont(ofSize: 13, weight: .bold)
         sec0Title.textColor = .labelColor
@@ -378,15 +377,15 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         genView.addSubview(sec0Title)
         currentY -= 26
 
-        let card0 = createCardBox(frame: NSRect(x: padX, y: currentY - 122, width: frame.width - padX * 2, height: 122))
+        let card0 = createCardBox(frame: NSRect(x: padX, y: currentY - 58, width: frame.width - padX * 2, height: 58))
         genView.addSubview(card0)
 
         let langLabel = NSTextField(labelWithString: L10n.tr("settings.language_label"))
         langLabel.font = NSFont.systemFont(ofSize: 12.5)
-        langLabel.frame = NSRect(x: 16, y: 86, width: 220, height: 20)
+        langLabel.frame = NSRect(x: 16, y: 18, width: 220, height: 20)
         card0.addSubview(langLabel)
 
-        let popLang = NSPopUpButton(frame: NSRect(x: 240, y: 83, width: 260, height: 26), pullsDown: false)
+        let popLang = NSPopUpButton(frame: NSRect(x: 240, y: 15, width: 260, height: 26), pullsDown: false)
         popLang.target = self
         popLang.action = #selector(languageSelected(_:))
         for lang in AppLanguage.allCases {
@@ -397,31 +396,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         card0.addSubview(popLang)
         self.languagePopUp = popLang
 
-        // Separator between language and alias display
-        let cardSep = NSBox(frame: NSRect(x: 16, y: 72, width: card0.frame.width - 32, height: 1))
-        cardSep.boxType = .separator
-        card0.addSubview(cardSep)
-
-        let chkAliasGen = NSButton(
-            checkboxWithTitle: L10n.tr("settings.show_alias_title"),
-            target: self,
-            action: #selector(showAliasToggled(_:))
-        )
-        chkAliasGen.font = NSFont.systemFont(ofSize: 12.5, weight: .medium)
-        chkAliasGen.frame = NSRect(x: 16, y: 40, width: card0.frame.width - 32, height: 24)
-        card0.addSubview(chkAliasGen)
-        self.generalShowAliasCheckbox = chkAliasGen
-
-        let aliasDesc = NSTextField(labelWithString: L10n.tr("settings.show_alias_desc"))
-        aliasDesc.font = NSFont.systemFont(ofSize: 11)
-        aliasDesc.textColor = .secondaryLabelColor
-        aliasDesc.frame = NSRect(x: 36, y: 12, width: card0.frame.width - 52, height: 26)
-        if let cell = aliasDesc.cell as? NSTextFieldCell {
-            cell.wraps = true
-        }
-        card0.addSubview(aliasDesc)
-
-        currentY -= 138
+        currentY -= 76
 
         // SECTION 1: Startup & Background
         let sec1Title = NSTextField(labelWithString: L10n.tr("settings.startup_section"))
@@ -537,7 +512,6 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         launchAtLoginCheckbox.state = LaunchAtLoginManager.shared.isEnabled ? .on : .off
         notificationsCheckbox.state = cfg.notificationsEnabled ? .on : .off
         soundCheckbox.state = cfg.soundEnabled ? .on : .off
-        generalShowAliasCheckbox?.state = cfg.showAccountAlias ? .on : .off
         accountsShowAliasCheckbox?.state = cfg.showAccountAlias ? .on : .off
 
         if let languagePopUp = languagePopUp {
@@ -555,7 +529,6 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         let enabled = (sender.state == .on)
         ConfigManager.shared.setShowAccountAlias(enabled)
         accountsShowAliasCheckbox?.state = enabled ? .on : .off
-        generalShowAliasCheckbox?.state = enabled ? .on : .off
         tableView?.reloadData()
         onUpdateCallback?()
     }
@@ -606,7 +579,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         let titleLabel = NSTextField(labelWithString: L10n.tr("settings.accounts_list_title"))
         titleLabel.font = NSFont.systemFont(ofSize: 13, weight: .bold)
         titleLabel.textColor = .labelColor
-        titleLabel.frame = NSRect(x: padX, y: currentY, width: 230, height: 20)
+        titleLabel.frame = NSRect(x: padX, y: currentY, width: 220, height: 20)
         accView.addSubview(titleLabel)
         self.accountsListHeaderLabel = titleLabel
 
@@ -615,8 +588,9 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
             target: self,
             action: #selector(showAliasToggled(_:))
         )
-        chkAlias.font = NSFont.systemFont(ofSize: 12)
-        chkAlias.frame = NSRect(x: padX + 235, y: currentY - 2, width: 210, height: 24)
+        chkAlias.font = NSFont.systemFont(ofSize: 12, weight: .medium)
+        chkAlias.toolTip = L10n.tr("settings.show_alias_desc")
+        chkAlias.frame = NSRect(x: padX + 225, y: currentY - 2, width: 230, height: 24)
         chkAlias.state = ConfigManager.shared.config.showAccountAlias ? .on : .off
         accView.addSubview(chkAlias)
         self.accountsShowAliasCheckbox = chkAlias
