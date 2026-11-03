@@ -156,8 +156,11 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
 
     private func loadAppLogo() -> NSImage? {
         var image: NSImage?
-        if let path = Bundle.main.path(forResource: "AppIcon1024", ofType: "png"),
+        if let path = Bundle.main.path(forResource: "StatusBarLogo", ofType: "png"),
            let img = NSImage(contentsOfFile: path) {
+            image = img
+        } else if let path = Bundle.main.path(forResource: "AppIcon1024", ofType: "png"),
+                  let img = NSImage(contentsOfFile: path) {
             image = img
         } else if let path = Bundle.main.path(forResource: "AppIcon", ofType: "icns"),
                   let img = NSImage(contentsOfFile: path) {
@@ -168,7 +171,9 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
             image = img
         } else {
             let directCandidates = [
+                "/Applications/Antigravity Orbit.app/Contents/Resources/StatusBarLogo.png",
                 "/Applications/Antigravity Orbit.app/Contents/Resources/AppIcon1024.png",
+                FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("AntigravityOrbit/Resources/StatusBarLogo.png").path,
                 FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("AntigravityOrbit/Resources/AppIcon1024.png").path
             ]
             for path in directCandidates {
@@ -217,6 +222,15 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
             unkItem.isEnabled = false
             menu.addItem(unkItem)
         } else {
+            let infoColor = NSColor(name: nil) { appearance in
+                let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                if isDark {
+                    return NSColor(red: 0.42, green: 0.73, blue: 1.0, alpha: 1.0)
+                } else {
+                    return NSColor(red: 0.12, green: 0.52, blue: 0.90, alpha: 1.0)
+                }
+            }
+
             for (index, acc) in accountStatuses.enumerated() {
                 let pctVal = acc.gemini5hPercentage ?? acc.remainingPercentage
                 let quotaStr: String
@@ -252,63 +266,27 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
                 }
                 menu.addItem(item)
 
+                let prefix = "\(index + 1). "
+                let prefixWidth = ceil((prefix as NSString).size(withAttributes: [.font: NSFont.menuFont(ofSize: 0)]).width)
+                let indentX: CGFloat = 30 + prefixWidth
+
                 // Sub-item: Quota
-                let quotaLineTitle = "   📊 " + L10n.tr("menu.quota_label", quotaStr)
-                let quotaItem = NSMenuItem(title: quotaLineTitle, action: nil, keyEquivalent: "")
-                quotaItem.isEnabled = false
-                quotaItem.indentationLevel = 1
-                quotaItem.attributedTitle = NSAttributedString(
-                    string: quotaLineTitle,
-                    attributes: [
-                        .font: NSFont.systemFont(ofSize: 11.5),
-                        .foregroundColor: NSColor.secondaryLabelColor
-                    ]
-                )
-                menu.addItem(quotaItem)
+                let quotaLineTitle = L10n.tr("menu.quota_label", quotaStr)
+                menu.addItem(createInfoMenuItem(text: quotaLineTitle, color: infoColor, indentX: indentX))
 
                 // Sub-item: Plan / Gói
                 let tierDisplayName = acc.subscriptionTier ?? L10n.tr("tier.free")
-                let tierLineTitle = "   🏷️ " + L10n.tr("menu.tier_label", tierDisplayName)
-                let tierItem = NSMenuItem(title: tierLineTitle, action: nil, keyEquivalent: "")
-                tierItem.isEnabled = false
-                tierItem.indentationLevel = 1
-                tierItem.attributedTitle = NSAttributedString(
-                    string: tierLineTitle,
-                    attributes: [
-                        .font: NSFont.systemFont(ofSize: 11.5),
-                        .foregroundColor: NSColor.secondaryLabelColor
-                    ]
-                )
-                menu.addItem(tierItem)
+                let tierLineTitle = L10n.tr("menu.tier_label", tierDisplayName)
+                menu.addItem(createInfoMenuItem(text: tierLineTitle, color: infoColor, indentX: indentX))
 
                 // Sub-item: Model
                 if acc.isCurrent {
                     let activeModelName = acc.activeModel ?? QuotaService.shared.getCurrentAntigravityModel()
-                    let currentModelTitle = "   🤖 " + L10n.tr("menu.current_model", activeModelName)
-                    let currentModelItem = NSMenuItem(title: currentModelTitle, action: nil, keyEquivalent: "")
-                    currentModelItem.isEnabled = false
-                    currentModelItem.indentationLevel = 1
-                    currentModelItem.attributedTitle = NSAttributedString(
-                        string: currentModelTitle,
-                        attributes: [
-                            .font: NSFont.systemFont(ofSize: 11.5),
-                            .foregroundColor: NSColor.secondaryLabelColor
-                        ]
-                    )
-                    menu.addItem(currentModelItem)
+                    let currentModelTitle = L10n.tr("menu.current_model", activeModelName)
+                    menu.addItem(createInfoMenuItem(text: currentModelTitle, color: infoColor, indentX: indentX))
                 } else if let model = acc.activeModel, !model.isEmpty {
-                    let modelTitle = "   🤖 " + L10n.tr("menu.current_model", model)
-                    let modelItem = NSMenuItem(title: modelTitle, action: nil, keyEquivalent: "")
-                    modelItem.isEnabled = false
-                    modelItem.indentationLevel = 1
-                    modelItem.attributedTitle = NSAttributedString(
-                        string: modelTitle,
-                        attributes: [
-                            .font: NSFont.systemFont(ofSize: 11.5),
-                            .foregroundColor: NSColor.secondaryLabelColor
-                        ]
-                    )
-                    menu.addItem(modelItem)
+                    let modelTitle = L10n.tr("menu.current_model", model)
+                    menu.addItem(createInfoMenuItem(text: modelTitle, color: infoColor, indentX: indentX))
                 }
             }
         }
@@ -589,6 +567,28 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
 
     @objc private func quitApp() {
         NSApplication.shared.terminate(nil)
+    }
+
+    private func createInfoMenuItem(text: String, color: NSColor, indentX: CGFloat = 45, fontSize: CGFloat = 10.5) -> NSMenuItem {
+        let item = NSMenuItem()
+        let height: CGFloat = 17
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 280, height: height))
+        container.autoresizingMask = [.width]
+
+        let label = NSTextField(labelWithString: text)
+        label.font = NSFont.systemFont(ofSize: fontSize)
+        label.textColor = color
+        label.isEditable = false
+        label.isSelectable = false
+        label.isBezeled = false
+        label.drawsBackground = false
+        label.lineBreakMode = .byTruncatingTail
+        label.frame = NSRect(x: indentX, y: 1, width: max(50, 280 - indentX - 10), height: 15)
+        label.autoresizingMask = [.width]
+
+        container.addSubview(label)
+        item.view = container
+        return item
     }
 
     // MARK: - NSMenuItemValidation

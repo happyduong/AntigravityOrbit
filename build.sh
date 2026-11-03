@@ -12,32 +12,29 @@ EXECUTABLE_NAME="AntigravityOrbit"
 
 echo "=== Building Antigravity Orbit for macOS ==="
 
-# 1. Ensure custom icon is generated
-if [ ! -f "$PROJECT_DIR/Resources/AppIcon.icns" ]; then
-    echo "Generating custom logo..."
-    "$PROJECT_DIR/create_app_icon.sh"
-fi
-
 rm -rf "$APP_BUNDLE"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 
-echo "2. Compiling Swift sources (arm64)..."
+echo "1. Compiling Swift sources (arm64)..."
 swiftc -O \
     -target arm64-apple-macos12.0 \
     -parse-as-library \
     "$PROJECT_DIR"/Sources/*.swift \
     -o "$MACOS_DIR/$EXECUTABLE_NAME"
 
-echo "3. Copying Info.plist and custom AppIcon..."
+echo "2. Copying Info.plist and app icons..."
 cp "$PROJECT_DIR/Resources/Info.plist" "$CONTENTS_DIR/Info.plist"
 cp "$PROJECT_DIR/Resources/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
 if [ -f "$PROJECT_DIR/Resources/AppIcon1024.png" ]; then
     cp "$PROJECT_DIR/Resources/AppIcon1024.png" "$RESOURCES_DIR/AppIcon1024.png"
 fi
+if [ -f "$PROJECT_DIR/Resources/StatusBarLogo.png" ]; then
+    cp "$PROJECT_DIR/Resources/StatusBarLogo.png" "$RESOURCES_DIR/StatusBarLogo.png"
+fi
 
 chmod +x "$MACOS_DIR/$EXECUTABLE_NAME"
 
-echo "4. Code-signing app bundle (ad-hoc)..."
+echo "3. Code-signing app bundle (ad-hoc)..."
 codesign -s - --force --deep "$APP_BUNDLE"
 
 echo "✔ Build complete: $APP_BUNDLE"

@@ -830,17 +830,17 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
             }
 
             let tierName = acc.subscriptionTier ?? L10n.tr("tier.free")
-            cellView.subtitleLabel.stringValue = "🏷️ \(tierName)"
+            cellView.subtitleLabel.stringValue = tierName
             cellView.subtitleLabel.font = NSFont.systemFont(ofSize: 11)
             cellView.subtitleLabel.textColor = acc.isCurrent ? NSColor.systemBlue : NSColor.secondaryLabelColor
 
         case "ModelCol":
             if let modelName = acc.activeModel, !modelName.isEmpty {
-                cellView.titleLabel.stringValue = "🤖 \(modelName)"
+                cellView.titleLabel.stringValue = modelName
                 cellView.titleLabel.font = acc.isCurrent ? NSFont.boldSystemFont(ofSize: 11.5) : NSFont.systemFont(ofSize: 11.5)
                 cellView.titleLabel.textColor = acc.isCurrent ? NSColor.labelColor : NSColor.secondaryLabelColor
             } else {
-                cellView.titleLabel.stringValue = "🤖 --"
+                cellView.titleLabel.stringValue = "--"
                 cellView.titleLabel.font = NSFont.systemFont(ofSize: 11.5)
                 cellView.titleLabel.textColor = NSColor.tertiaryLabelColor
             }
@@ -858,7 +858,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         case "Quota5hCol":
             let pct = acc.gemini5hPercentage ?? acc.remainingPercentage
             if pct < 0 {
-                cellView.titleLabel.stringValue = "⚠️ \(L10n.tr("menu.token_error"))"
+                cellView.titleLabel.stringValue = L10n.tr("menu.token_error")
                 cellView.titleLabel.font = NSFont.systemFont(ofSize: 11.5, weight: .semibold)
                 cellView.titleLabel.textColor = NSColor.systemRed
             } else {

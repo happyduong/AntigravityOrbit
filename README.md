@@ -91,13 +91,13 @@ Nhấp vào icon Menu Bar để mở menu điều khiển trực quan:
 
 ```text
 [✓] 1. primary@gmail.com
-       📊 Quota: 5h: 85% • Tuần: 98%
-       🏷️ Gói: Google AI Pro
-       🤖 Model: Gemini 3.8 Flash (High)
+       Quota: 5h: 85% • Tuần: 98%
+       Gói: Google AI Pro
+       Model: Gemini 3.8 Flash (High)
     2. secondary@gmail.com
-       📊 Quota: 5h: 92% • Tuần: 100%
-       🏷️ Gói: Google AI Pro
-       🤖 Model: Standby
+       Quota: 5h: 92% • Tuần: 100%
+       Gói: Google AI Pro
+       Model: Standby
     Cài đặt tài khoản...
     ────────────────────────────────────────
     [✓] Tự động xoay vòng tài khoản khi sắp hết token
@@ -122,8 +122,8 @@ Giao diện cửa sổ native kích thước 660 x 580 px với 3 Tab riêng bi�
 
 #### 👥 Tab 1: Quản lý Tài khoản (Accounts)
 * **Bảng danh sách 4 cột chuyên nghiệp**:
-  1. *Tài khoản & Gói*: Email kèm icon trạng thái `🟢/⚪` và tag Gói cước (`🏷️ Google AI Pro`).
-  2. *Model & Trạng thái*: Tên model AI (`🤖 Gemini 3.8 Flash`) + tag `● Đang hoạt động` hoặc `○ Dự phòng (Standby)`.
+  1. *Tài khoản & Gói*: Email kèm icon trạng thái `🟢/⚪` và tag Gói cước (`Google AI Pro`).
+  2. *Model & Trạng thái*: Tên model AI (`Gemini 3.8 Flash`) + tag `● Đang hoạt động` hoặc `○ Dự phòng (Standby)`.
   3. *Hạn mức 5 giờ*: Số % còn lại hiển thị phông số monospaced, tự động đổi màu xanh / vàng / đỏ.
   4. *Hạn mức tuần*: Tỷ lệ quota còn lại trong chu kỳ 7 ngày.
 * **Thao tác nhanh**:
