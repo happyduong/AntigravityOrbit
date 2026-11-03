@@ -1,0 +1,58 @@
+<Page
+    x:Class="AntigravityOrbit.Views.RotationPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StackPanel Spacing="20" MaxWidth="600" HorizontalAlignment="Left">
+        <TextBlock Text="Cấu hình Xoay vòng Thông minh" FontWeight="SemiBold" FontSize="18" />
+
+        <Border Padding="16" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
+            <StackPanel Spacing="16">
+                <!-- Auto Rotate Toggle -->
+                <Grid>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Tự động xoay vòng tài khoản" FontWeight="Medium" />
+                        <TextBlock Text="Tự động chuyển sang tài khoản dự phòng tốt nhất khi cạn hạn mức" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <ToggleSwitch x:Name="AutoRotateToggle" HorizontalAlignment="Right" Toggled="ConfigControl_Changed" />
+                </Grid>
+
+                <MenuFlyoutSeparator />
+
+                <!-- Threshold -->
+                <Grid>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Ngưỡng kích hoạt (% còn lại)" FontWeight="Medium" />
+                        <TextBlock Text="Kích hoạt xoay vòng khi hạn mức 5 giờ xuống dưới ngưỡng này" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <ComboBox x:Name="ThresholdComboBox" HorizontalAlignment="Right" Width="140" SelectionChanged="ConfigControl_Changed">
+                        <ComboBoxItem Content="5%" Tag="5" />
+                        <ComboBoxItem Content="10% (Khuyến nghị)" Tag="10" IsSelected="True" />
+                        <ComboBoxItem Content="15%" Tag="15" />
+                        <ComboBoxItem Content="20%" Tag="20" />
+                        <ComboBoxItem Content="25%" Tag="25" />
+                        <ComboBoxItem Content="30%" Tag="30" />
+                    </ComboBox>
+                </Grid>
+
+                <MenuFlyoutSeparator />
+
+                <!-- Interval -->
+                <Grid>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Chu kỳ quét hạn mức" FontWeight="Medium" />
+                        <TextBlock Text="Thời gian định kỳ cập nhật quota thực tế từ API" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <ComboBox x:Name="IntervalComboBox" HorizontalAlignment="Right" Width="140" SelectionChanged="ConfigControl_Changed">
+                        <ComboBoxItem Content="15 giây" Tag="15" />
+                        <ComboBoxItem Content="30 giây" Tag="30" />
+                        <ComboBoxItem Content="60 giây (Mặc định)" Tag="60" IsSelected="True" />
+                        <ComboBoxItem Content="2 phút" Tag="120" />
+                        <ComboBoxItem Content="5 phút" Tag="300" />
+                    </ComboBox>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</Page>
+

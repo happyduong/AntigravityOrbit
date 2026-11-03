@@ -1,0 +1,44 @@
+name: Release Windows 11 Package (WinUI 3)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore windows/AntigravityOrbit/AntigravityOrbit.csproj
+
+      - name: Build and Publish Self-Contained WinUI 3 Executable
+        run: |
+          dotnet publish windows/AntigravityOrbit/AntigravityOrbit.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            /p:PublishSingleFile=true `
+            /p:IncludeNativeLibrariesForSelfExtract=true `
+            /p:WindowsPackageType=None `
+            -o windows/dist
+
+      - name: Create Portable Zip
+        run: |
+          Compress-Archive -Path windows/dist/* -DestinationPath windows/dist/Antigravity-Orbit-windows-x64.zip -Force
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-winui3-bundle
+          path: windows/dist/Antigravity-Orbit-windows-x64.zip
+
