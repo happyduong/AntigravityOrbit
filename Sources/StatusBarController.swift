@@ -222,72 +222,79 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
             unkItem.isEnabled = false
             menu.addItem(unkItem)
         } else {
-            let infoColor = NSColor(name: nil) { appearance in
-                let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-                if isDark {
-                    return NSColor(red: 0.42, green: 0.73, blue: 1.0, alpha: 1.0)
-                } else {
-                    return NSColor(red: 0.12, green: 0.52, blue: 0.90, alpha: 1.0)
-                }
-            }
-
-            for (index, acc) in accountStatuses.enumerated() {
+            for acc in accountStatuses {
                 let pctVal = acc.gemini5hPercentage ?? acc.remainingPercentage
                 let quotaStr: String
+                let quotaBadge: String
+
                 if pctVal < 0 {
                     quotaStr = L10n.tr("menu.token_error")
+                    quotaBadge = "⚠️"
                 } else if let wk = acc.geminiWeeklyPercentage {
                     let weekStr = L10n.tr("menu.week_label", wk)
                     quotaStr = "5h: \(pctVal)% • \(weekStr)"
+                    quotaBadge = pctVal > 50 ? "\(pctVal)% 🟢" : (pctVal > 20 ? "\(pctVal)% 🟡" : "\(pctVal)% 🔴")
                 } else {
                     quotaStr = "5h: \(pctVal)%"
+                    quotaBadge = pctVal > 50 ? "\(pctVal)% 🟢" : (pctVal > 20 ? "\(pctVal)% 🟡" : "\(pctVal)% 🔴")
                 }
 
-                let titleText = "\(index + 1). \(acc.email)"
-
-                let item = NSMenuItem(title: titleText, action: #selector(manualSwitchAccount(_:)), keyEquivalent: "")
-                item.target = self
-                item.representedObject = acc.id
-
-                if let model = acc.activeModel, !model.isEmpty {
-                    item.toolTip = "\(acc.email)\nModel: \(model)\nQuota: \(quotaStr)"
-                } else {
-                    item.toolTip = "\(acc.email)\nQuota: \(quotaStr)"
-                }
+                // Main Menu Account Row (Clean, single-line with quota badge, no tooltip popup)
+                let mainTitle = "\(acc.email)   (\(quotaBadge))"
+                let accountItem = NSMenuItem(title: mainTitle, action: nil, keyEquivalent: "")
 
                 if acc.isCurrent {
-                    item.state = .on
-                    item.attributedTitle = NSAttributedString(
-                        string: titleText,
+                    accountItem.state = .on
+                    accountItem.attributedTitle = NSAttributedString(
+                        string: mainTitle,
                         attributes: [
                             .foregroundColor: NSColor.systemGreen
                         ]
                     )
                 }
-                menu.addItem(item)
 
-                let prefix = "\(index + 1). "
-                let prefixWidth = ceil((prefix as NSString).size(withAttributes: [.font: NSFont.menuFont(ofSize: 0)]).width)
-                let indentX: CGFloat = 30 + prefixWidth
+                // Native Hierarchical Submenu (Flyout)
+                let subMenu = NSMenu()
+                subMenu.autoenablesItems = false
 
-                // Sub-item: Quota
+                // Action: Active status or switch to this account
+                if acc.isCurrent {
+                    let activeItem = createStaticStatusMenuItem(text: "✓  \(L10n.tr("menu.active_account"))")
+                    subMenu.addItem(activeItem)
+                } else {
+                    let switchItem = NSMenuItem(
+                        title: "🔄  \(L10n.tr("menu.switch_to_account"))",
+                        action: #selector(manualSwitchAccount(_:)),
+                        keyEquivalent: ""
+                    )
+                    switchItem.target = self
+                    switchItem.representedObject = acc.id
+                    subMenu.addItem(switchItem)
+                }
+
+                subMenu.addItem(NSMenuItem.separator())
+
+                // 1. Quota details (Static view: bright, crisp, hover-blocked, click-blocked)
                 let quotaLineTitle = L10n.tr("menu.quota_label", quotaStr)
-                menu.addItem(createInfoMenuItem(text: quotaLineTitle, color: infoColor, indentX: indentX))
+                subMenu.addItem(createStaticInfoMenuItem(icon: "📊", text: quotaLineTitle))
 
-                // Sub-item: Plan / Gói
+                // 2. Plan / Tier
                 let tierDisplayName = acc.subscriptionTier ?? L10n.tr("tier.free")
                 let tierLineTitle = L10n.tr("menu.tier_label", tierDisplayName)
-                menu.addItem(createInfoMenuItem(text: tierLineTitle, color: infoColor, indentX: indentX))
+                subMenu.addItem(createStaticInfoMenuItem(icon: "🏷️", text: tierLineTitle))
 
-                // Sub-item: Model
+                // 3. Active Model
+                let modelDisplayName: String
                 if acc.isCurrent {
-                    let activeModelName = acc.activeModel ?? QuotaService.shared.getCurrentAntigravityModel()
-                    let currentModelTitle = L10n.tr("menu.current_model", activeModelName)
-                    menu.addItem(createInfoMenuItem(text: currentModelTitle, color: infoColor, indentX: indentX))
-                } else if let model = acc.activeModel, !model.isEmpty {
-                    let modelTitle = L10n.tr("menu.current_model", model)
-                    menu.addItem(createInfoMenuItem(text: modelTitle, color: infoColor, indentX: indentX))
+                    modelDisplayName = acc.activeModel ?? QuotaService.shared.getCurrentAntigravityModel()
+                } else {
+                    modelDisplayName = acc.activeModel ?? "--"
                 }
+                let modelLineTitle = L10n.tr("menu.current_model", modelDisplayName)
+                subMenu.addItem(createStaticInfoMenuItem(icon: "🤖", text: modelLineTitle))
+
+                accountItem.submenu = subMenu
+                menu.addItem(accountItem)
             }
         }
 
@@ -569,21 +576,78 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
         NSApplication.shared.terminate(nil)
     }
 
-    private func createInfoMenuItem(text: String, color: NSColor, indentX: CGFloat = 45, fontSize: CGFloat = 10.5) -> NSMenuItem {
+    // MARK: - Static (Non-Clickable, Non-Hoverable) Submenu Items
+
+    private func createStaticStatusMenuItem(text: String) -> NSMenuItem {
         let item = NSMenuItem()
-        let height: CGFloat = 17
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 280, height: height))
+        let font = NSFont.boldSystemFont(ofSize: 12.5)
+        let textSize = (text as NSString).size(withAttributes: [.font: font])
+        let width = max(270.0, ceil(textSize.width) + 36.0)
+        let height: CGFloat = 24.0
+
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: width, height: height))
         container.autoresizingMask = [.width]
 
         let label = NSTextField(labelWithString: text)
-        label.font = NSFont.systemFont(ofSize: fontSize)
-        label.textColor = color
+        label.font = font
+        label.textColor = NSColor.systemGreen
         label.isEditable = false
         label.isSelectable = false
         label.isBezeled = false
         label.drawsBackground = false
-        label.lineBreakMode = .byTruncatingTail
-        label.frame = NSRect(x: indentX, y: 1, width: max(50, 280 - indentX - 10), height: 15)
+        label.frame = NSRect(x: 14, y: 4, width: width - 20, height: 18)
+        label.autoresizingMask = [.width]
+
+        container.addSubview(label)
+        item.view = container
+        return item
+    }
+
+    private func createStaticInfoMenuItem(icon: String, text: String) -> NSMenuItem {
+        let item = NSMenuItem()
+        let font = NSFont.systemFont(ofSize: 12.5, weight: .medium)
+        let fullText = "\(icon)  \(text)"
+        let textSize = (fullText as NSString).size(withAttributes: [.font: font])
+        let width = max(270.0, ceil(textSize.width) + 36.0)
+        let height: CGFloat = 22.0
+
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: width, height: height))
+        container.autoresizingMask = [.width]
+
+        let attr = NSMutableAttributedString()
+        if let colonIndex = text.firstIndex(of: ":") {
+            let labelPart = String(text[..<colonIndex]) + ":"
+            let valuePart = String(text[text.index(after: colonIndex)...])
+            attr.append(NSAttributedString(
+                string: "\(icon)  \(labelPart)",
+                attributes: [
+                    .font: NSFont.systemFont(ofSize: 12.5, weight: .medium),
+                    .foregroundColor: NSColor.secondaryLabelColor
+                ]
+            ))
+            attr.append(NSAttributedString(
+                string: valuePart,
+                attributes: [
+                    .font: NSFont.systemFont(ofSize: 12.5, weight: .semibold),
+                    .foregroundColor: NSColor.labelColor
+                ]
+            ))
+        } else {
+            attr.append(NSAttributedString(
+                string: fullText,
+                attributes: [
+                    .font: NSFont.systemFont(ofSize: 12.5, weight: .medium),
+                    .foregroundColor: NSColor.labelColor
+                ]
+            ))
+        }
+
+        let label = NSTextField(labelWithAttributedString: attr)
+        label.isEditable = false
+        label.isSelectable = false
+        label.isBezeled = false
+        label.drawsBackground = false
+        label.frame = NSRect(x: 14, y: 3, width: width - 20, height: 18)
         label.autoresizingMask = [.width]
 
         container.addSubview(label)

@@ -104,6 +104,8 @@ public class LocalizationManager {
             "menu.current_model": "Active Model: %@",
             "menu.quota_label": "Quota: %@",
             "menu.tier_label": "Plan: %@",
+            "menu.switch_to_account": "Switch to this account",
+            "menu.active_account": "Currently active",
             "tier.free": "Free",
 
             "settings.title": "Settings - Antigravity Orbit",
@@ -231,6 +233,8 @@ public class LocalizationManager {
             "menu.current_model": "Model đang dùng: %@",
             "menu.quota_label": "Quota: %@",
             "menu.tier_label": "Gói: %@",
+            "menu.switch_to_account": "Chuyển sang tài khoản này",
+            "menu.active_account": "Đang hoạt động",
             "tier.free": "Miễn phí (Free)",
 
             "settings.title": "Cài đặt - Antigravity Orbit",
@@ -358,6 +362,8 @@ public class LocalizationManager {
             "menu.current_model": "当前模型：%@",
             "menu.quota_label": "配额：%@",
             "menu.tier_label": "套餐：%@",
+            "menu.switch_to_account": "切换到此账户",
+            "menu.active_account": "当前活动账户",
             "tier.free": "免费 (Free)",
 
             "settings.title": "设置 - Antigravity Orbit",
@@ -485,6 +491,8 @@ public class LocalizationManager {
             "menu.current_model": "使用中モデル：%@",
             "menu.quota_label": "クォータ：%@",
             "menu.tier_label": "プラン：%@",
+            "menu.switch_to_account": "このアカウントに切り替える",
+            "menu.active_account": "現在アクティブ",
             "tier.free": "無料 (Free)",
 
             "settings.title": "設定 - Antigravity Orbit",
@@ -612,6 +620,8 @@ public class LocalizationManager {
             "menu.current_model": "사용 중 모델: %@",
             "menu.quota_label": "할당량: %@",
             "menu.tier_label": "요금제: %@",
+            "menu.switch_to_account": "이 계정으로 전환",
+            "menu.active_account": "현재 활성 계정",
             "tier.free": "무료 (Free)",
 
             "settings.title": "설정 - Antigravity Orbit",
