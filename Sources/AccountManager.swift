@@ -481,6 +481,48 @@ public class AccountManager {
         }
     }
 
+    // MARK: - 5. Update Account Alias
+    public func updateAccountAlias(id: String, newName: String) -> (success: Bool, message: String) {
+        let trimmedName = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else {
+            return (false, "Tên gợi nhớ không được để trống.")
+        }
+
+        var accountsFileModel = getOrCreateAccountsFile()
+        guard let targetIndex = accountsFileModel.accounts.firstIndex(where: { $0.id == id }) else {
+            return (false, "Không tìm thấy tài khoản cần cập nhật.")
+        }
+
+        let existing = accountsFileModel.accounts[targetIndex]
+        let updated = ManagedAccount(
+            id: existing.id,
+            email: existing.email,
+            name: trimmedName,
+            disabled: existing.disabled,
+            proxy_disabled: existing.proxy_disabled,
+            created_at: existing.created_at,
+            last_used: existing.last_used,
+            model: existing.model,
+            active_model: existing.active_model
+        )
+        accountsFileModel.accounts[targetIndex] = updated
+
+        // Update detail JSON file if exists
+        let detailFileUrl = accountsDir.appendingPathComponent("\(id).json")
+        if var detailJson = (try? Data(contentsOf: detailFileUrl)).flatMap({ try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }) {
+            detailJson["name"] = trimmedName
+            if let updatedData = try? JSONSerialization.data(withJSONObject: detailJson, options: .prettyPrinted) {
+                try? updatedData.write(to: detailFileUrl, options: .atomic)
+            }
+        }
+
+        if saveAccountsFile(accountsFileModel) {
+            return (true, "Đã cập nhật tên gợi nhớ thành [\(trimmedName)] thành công!")
+        } else {
+            return (false, "Lỗi cập nhật tệp accounts.json.")
+        }
+    }
+
     private func saveAccountsFile(_ model: AccountsFile) -> Bool {
         do {
             let encoder = JSONEncoder()

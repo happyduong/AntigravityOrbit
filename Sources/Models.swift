@@ -32,6 +32,13 @@ public struct ManagedAccount: Codable {
         self.model = model
         self.active_model = active_model
     }
+
+    public func displayName(showAlias: Bool) -> String {
+        if showAlias, let n = name?.trimmingCharacters(in: .whitespacesAndNewlines), !n.isEmpty {
+            return n
+        }
+        return email
+    }
 }
 
 public struct AccountsFile: Codable {
@@ -207,5 +214,19 @@ public struct AccountStatus {
 
     public var isExhausted: Bool {
         return remainingPercentage <= 0
+    }
+
+    public func displayName(showAlias: Bool) -> String {
+        if showAlias {
+            let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                return trimmed
+            }
+        }
+        return email
+    }
+
+    public var currentDisplayName: String {
+        return displayName(showAlias: ConfigManager.shared.config.showAccountAlias)
     }
 }

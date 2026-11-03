@@ -15,6 +15,8 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
     private var tableView: NSTableView?
     private var deleteAccountButton: NSButton?
     private var switchAccountButton: NSButton?
+    private var editAliasButton: NSButton?
+    private var accountsShowAliasCheckbox: NSButton?
     private var accountsListHeaderLabel: NSTextField?
     private var accountsRefreshButton: NSButton?
     private var accountsScrollView: NSScrollView?
@@ -31,6 +33,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
     // Views for Tab 2: General & System
     private var generalView: NSView?
     private var languagePopUp: NSPopUpButton?
+    private var generalShowAliasCheckbox: NSButton?
     private var launchAtLoginCheckbox: NSButton?
     private var notificationsCheckbox: NSButton?
     private var soundCheckbox: NSButton?
@@ -103,7 +106,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
 
     private func buildWindow() {
         let winWidth: CGFloat = 660
-        let winHeight: CGFloat = 580
+        let winHeight: CGFloat = 610
         let contentRect = NSRect(x: 0, y: 0, width: winWidth, height: winHeight)
 
         let win = NSWindow(
@@ -372,17 +375,17 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         sec0Title.textColor = .labelColor
         sec0Title.frame = NSRect(x: padX, y: currentY, width: frame.width - padX * 2, height: 20)
         genView.addSubview(sec0Title)
-        currentY -= 28
+        currentY -= 26
 
-        let card0 = createCardBox(frame: NSRect(x: padX, y: currentY - 60, width: frame.width - padX * 2, height: 82))
+        let card0 = createCardBox(frame: NSRect(x: padX, y: currentY - 122, width: frame.width - padX * 2, height: 122))
         genView.addSubview(card0)
 
         let langLabel = NSTextField(labelWithString: L10n.tr("settings.language_label"))
         langLabel.font = NSFont.systemFont(ofSize: 12.5)
-        langLabel.frame = NSRect(x: 16, y: 46, width: 220, height: 20)
+        langLabel.frame = NSRect(x: 16, y: 86, width: 220, height: 20)
         card0.addSubview(langLabel)
 
-        let popLang = NSPopUpButton(frame: NSRect(x: 240, y: 43, width: 260, height: 26), pullsDown: false)
+        let popLang = NSPopUpButton(frame: NSRect(x: 240, y: 83, width: 260, height: 26), pullsDown: false)
         popLang.target = self
         popLang.action = #selector(languageSelected(_:))
         for lang in AppLanguage.allCases {
@@ -393,13 +396,31 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         card0.addSubview(popLang)
         self.languagePopUp = popLang
 
-        let langDesc = NSTextField(labelWithString: L10n.tr("settings.language_desc"))
-        langDesc.font = NSFont.systemFont(ofSize: 11)
-        langDesc.textColor = .secondaryLabelColor
-        langDesc.frame = NSRect(x: 16, y: 14, width: card0.frame.width - 32, height: 20)
-        card0.addSubview(langDesc)
+        // Separator between language and alias display
+        let cardSep = NSBox(frame: NSRect(x: 16, y: 72, width: card0.frame.width - 32, height: 1))
+        cardSep.boxType = .separator
+        card0.addSubview(cardSep)
 
-        currentY -= 100
+        let chkAliasGen = NSButton(
+            checkboxWithTitle: L10n.tr("settings.show_alias_title"),
+            target: self,
+            action: #selector(showAliasToggled(_:))
+        )
+        chkAliasGen.font = NSFont.systemFont(ofSize: 12.5, weight: .medium)
+        chkAliasGen.frame = NSRect(x: 16, y: 40, width: card0.frame.width - 32, height: 24)
+        card0.addSubview(chkAliasGen)
+        self.generalShowAliasCheckbox = chkAliasGen
+
+        let aliasDesc = NSTextField(labelWithString: L10n.tr("settings.show_alias_desc"))
+        aliasDesc.font = NSFont.systemFont(ofSize: 11)
+        aliasDesc.textColor = .secondaryLabelColor
+        aliasDesc.frame = NSRect(x: 36, y: 12, width: card0.frame.width - 52, height: 26)
+        if let cell = aliasDesc.cell as? NSTextFieldCell {
+            cell.wraps = true
+        }
+        card0.addSubview(aliasDesc)
+
+        currentY -= 138
 
         // SECTION 1: Startup & Background
         let sec1Title = NSTextField(labelWithString: L10n.tr("settings.startup_section"))
@@ -515,6 +536,8 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         launchAtLoginCheckbox.state = LaunchAtLoginManager.shared.isEnabled ? .on : .off
         notificationsCheckbox.state = cfg.notificationsEnabled ? .on : .off
         soundCheckbox.state = cfg.soundEnabled ? .on : .off
+        generalShowAliasCheckbox?.state = cfg.showAccountAlias ? .on : .off
+        accountsShowAliasCheckbox?.state = cfg.showAccountAlias ? .on : .off
 
         if let languagePopUp = languagePopUp {
             let curLang = LocalizationManager.shared.currentLanguage.rawValue
@@ -525,6 +548,15 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
                 }
             }
         }
+    }
+
+    @objc private func showAliasToggled(_ sender: NSButton) {
+        let enabled = (sender.state == .on)
+        ConfigManager.shared.setShowAccountAlias(enabled)
+        accountsShowAliasCheckbox?.state = enabled ? .on : .off
+        generalShowAliasCheckbox?.state = enabled ? .on : .off
+        tableView?.reloadData()
+        onUpdateCallback?()
     }
 
     @objc private func languageSelected(_ sender: NSPopUpButton) {
@@ -569,18 +601,29 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         let padX: CGFloat = 20
         var currentY: CGFloat = frame.height - 34
 
-        // Header Title & Refresh Button
+        // Header Title, Alias Checkbox & Refresh Button
         let titleLabel = NSTextField(labelWithString: L10n.tr("settings.accounts_list_title"))
         titleLabel.font = NSFont.systemFont(ofSize: 13, weight: .bold)
         titleLabel.textColor = .labelColor
-        titleLabel.frame = NSRect(x: padX, y: currentY, width: 380, height: 20)
+        titleLabel.frame = NSRect(x: padX, y: currentY, width: 230, height: 20)
         accView.addSubview(titleLabel)
         self.accountsListHeaderLabel = titleLabel
+
+        let chkAlias = NSButton(
+            checkboxWithTitle: L10n.tr("settings.show_alias_checkbox"),
+            target: self,
+            action: #selector(showAliasToggled(_:))
+        )
+        chkAlias.font = NSFont.systemFont(ofSize: 12)
+        chkAlias.frame = NSRect(x: padX + 235, y: currentY - 2, width: 210, height: 24)
+        chkAlias.state = ConfigManager.shared.config.showAccountAlias ? .on : .off
+        accView.addSubview(chkAlias)
+        self.accountsShowAliasCheckbox = chkAlias
 
         let refreshBtn = NSButton(title: "🔄 \(L10n.tr("menu.refresh_quota"))", target: self, action: #selector(refreshQuotasClicked))
         refreshBtn.bezelStyle = .rounded
         refreshBtn.font = NSFont.systemFont(ofSize: 11.5)
-        refreshBtn.frame = NSRect(x: frame.width - padX - 170, y: currentY - 2, width: 170, height: 26)
+        refreshBtn.frame = NSRect(x: frame.width - padX - 160, y: currentY - 2, width: 160, height: 26)
         accView.addSubview(refreshBtn)
         self.accountsRefreshButton = refreshBtn
 
@@ -640,7 +683,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         accView.addSubview(scrollView)
         self.accountsScrollView = scrollView
 
-        // Action Buttons Row 1: Set Active & Delete (placed clearly BELOW scrollView)
+        // Action Buttons Row 1: Set Active, Edit Alias & Delete (placed clearly BELOW scrollView)
         let scrollBottom = scrollFrame.origin.y
         let btnHeight: CGFloat = 28
         let btnRow1Y = scrollBottom - 14 - btnHeight
@@ -652,10 +695,22 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         )
         btnSwitch.bezelStyle = .rounded
         btnSwitch.font = NSFont.systemFont(ofSize: 12, weight: .medium)
-        btnSwitch.frame = NSRect(x: padX, y: btnRow1Y, width: 210, height: btnHeight)
+        btnSwitch.frame = NSRect(x: padX, y: btnRow1Y, width: 195, height: btnHeight)
         btnSwitch.isEnabled = false
         accView.addSubview(btnSwitch)
         self.switchAccountButton = btnSwitch
+
+        let btnEdit = NSButton(
+            title: L10n.tr("settings.btn_edit_alias"),
+            target: self,
+            action: #selector(editAliasClicked)
+        )
+        btnEdit.bezelStyle = .rounded
+        btnEdit.font = NSFont.systemFont(ofSize: 12)
+        btnEdit.frame = NSRect(x: padX + 205, y: btnRow1Y, width: 195, height: btnHeight)
+        btnEdit.isEnabled = false
+        accView.addSubview(btnEdit)
+        self.editAliasButton = btnEdit
 
         let btnDel = NSButton(
             title: L10n.tr("settings.btn_delete_account"),
@@ -664,7 +719,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         )
         btnDel.bezelStyle = .rounded
         btnDel.font = NSFont.systemFont(ofSize: 12)
-        btnDel.frame = NSRect(x: padX + 220, y: btnRow1Y, width: 180, height: btnHeight)
+        btnDel.frame = NSRect(x: padX + 410, y: btnRow1Y, width: 190, height: btnHeight)
         btnDel.isEnabled = false
         accView.addSubview(btnDel)
         self.deleteAccountButton = btnDel
@@ -769,9 +824,11 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         let hasAccounts = !accountsData.isEmpty
 
         accountsListHeaderLabel?.isHidden = !hasAccounts
+        accountsShowAliasCheckbox?.isHidden = !hasAccounts
         accountsRefreshButton?.isHidden = !hasAccounts
         accountsScrollView?.isHidden = !hasAccounts
         switchAccountButton?.isHidden = !hasAccounts
+        editAliasButton?.isHidden = !hasAccounts
         deleteAccountButton?.isHidden = !hasAccounts
         accountsActionSeparator?.isHidden = !hasAccounts
 
@@ -783,6 +840,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
               let btnDel = deleteAccountButton else { return }
         guard let tv = tableView else {
             btnSwitch.isEnabled = false
+            editAliasButton?.isEnabled = false
             btnDel.isEnabled = false
             return
         }
@@ -790,9 +848,11 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         if selectedRow >= 0 && selectedRow < accountsData.count {
             let acc = accountsData[selectedRow]
             btnSwitch.isEnabled = !acc.isCurrent
+            editAliasButton?.isEnabled = true
             btnDel.isEnabled = !acc.isCurrent
         } else {
             btnSwitch.isEnabled = false
+            editAliasButton?.isEnabled = false
             btnDel.isEnabled = false
         }
     }
@@ -820,7 +880,22 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         switch colId {
         case "AccountCol":
             let statusIcon = acc.isCurrent ? "🟢" : "⚪"
-            cellView.titleLabel.stringValue = "\(statusIcon) \(acc.email)"
+            let tierName = acc.subscriptionTier ?? L10n.tr("tier.free")
+            let showAlias = ConfigManager.shared.config.showAccountAlias
+
+            if showAlias && !acc.name.isEmpty {
+                cellView.titleLabel.stringValue = "\(statusIcon) \(acc.name)"
+                cellView.subtitleLabel.stringValue = "\(acc.email)  •  \(tierName)"
+            } else {
+                cellView.titleLabel.stringValue = "\(statusIcon) \(acc.email)"
+                let trimmed = acc.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty && trimmed.lowercased() != acc.email.lowercased() {
+                    cellView.subtitleLabel.stringValue = "\(trimmed)  •  \(tierName)"
+                } else {
+                    cellView.subtitleLabel.stringValue = tierName
+                }
+            }
+
             if acc.isCurrent {
                 cellView.titleLabel.font = NSFont.boldSystemFont(ofSize: 12.5)
                 cellView.titleLabel.textColor = NSColor.labelColor
@@ -828,9 +903,6 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
                 cellView.titleLabel.font = NSFont.systemFont(ofSize: 12.5, weight: .medium)
                 cellView.titleLabel.textColor = NSColor.labelColor
             }
-
-            let tierName = acc.subscriptionTier ?? L10n.tr("tier.free")
-            cellView.subtitleLabel.stringValue = tierName
             cellView.subtitleLabel.font = NSFont.systemFont(ofSize: 11)
             cellView.subtitleLabel.textColor = acc.isCurrent ? NSColor.systemBlue : NSColor.secondaryLabelColor
 
@@ -932,7 +1004,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 if success {
-                    NotificationManager.shared.sendManualSwitchNotification(account: acc.email, quota: acc.remainingPercentage)
+                    NotificationManager.shared.sendManualSwitchNotification(account: acc.currentDisplayName, quota: acc.remainingPercentage)
                     self.onUpdateCallback?()
                 } else {
                     self.showAlert(
@@ -940,6 +1012,40 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
                         message: L10n.tr("alert.switch_specific_failed"),
                         style: .warning
                     )
+                }
+            }
+        }
+    }
+
+    @objc private func editAliasClicked() {
+        guard let tv = tableView else { return }
+        let row = tv.selectedRow
+        guard row >= 0 && row < accountsData.count else { return }
+        let acc = accountsData[row]
+
+        let alert = NSAlert()
+        alert.messageText = L10n.tr("settings.edit_alias_title")
+        alert.informativeText = L10n.tr("settings.edit_alias_msg", acc.email)
+        alert.alertStyle = .informational
+
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 280, height: 24))
+        input.stringValue = acc.name
+        alert.accessoryView = input
+        alert.addButton(withTitle: L10n.tr("settings.btn_save"))
+        alert.addButton(withTitle: L10n.tr("alert.btn_cancel"))
+        alert.window.initialFirstResponder = input
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            let newAlias = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !newAlias.isEmpty {
+                let res = AccountManager.shared.updateAccountAlias(id: acc.id, newName: newAlias)
+                showAlert(
+                    title: res.success ? L10n.tr("alert.success") : L10n.tr("alert.error"),
+                    message: res.message,
+                    style: res.success ? .informational : .warning
+                )
+                if res.success {
+                    self.onUpdateCallback?()
                 }
             }
         }

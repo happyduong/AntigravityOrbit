@@ -84,12 +84,13 @@ public class AccountRotator {
 
         executeSwitch(toAccountId: target.id) { success in
             if success {
-                let oldEmail = currentAccount.email
-                let newEmail = target.email
+                let showAlias = ConfigManager.shared.config.showAccountAlias
+                let oldDisplay = currentAccount.displayName(showAlias: showAlias)
+                let newDisplay = target.displayName(showAlias: showAlias)
                 let newPct = bestStatus?.remainingPercentage ?? 100
                 NotificationManager.shared.sendRotationNotification(
-                    oldAccount: oldEmail,
-                    newAccount: newEmail,
+                    oldAccount: oldDisplay,
+                    newAccount: newDisplay,
                     newQuota: newPct,
                     reason: reason
                 )

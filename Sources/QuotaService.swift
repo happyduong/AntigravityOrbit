@@ -108,10 +108,17 @@ public class QuotaService {
                 let currentModel = self.getCurrentAntigravityModel()
                 let localTier = acc.quota?.subscription_tier
                 let tierDisplayName = localTier.map { self.resolveTierDisplayName(tierId: $0, tierName: $0) } ?? L10n.tr("tier.free")
+                let customName = accountsFile.accounts.first(where: { $0.id == acc.id })?.name?.trimmingCharacters(in: .whitespacesAndNewlines)
+                let resolvedName: String
+                if let custom = customName, !custom.isEmpty {
+                    resolvedName = custom
+                } else {
+                    resolvedName = acc.name ?? acc.email
+                }
                 let status = AccountStatus(
                     id: acc.id,
                     email: acc.email,
-                    name: acc.name ?? acc.email,
+                    name: resolvedName,
                     isCurrent: isCurrent,
                     remainingPercentage: primaryPercent,
                     gemini5hPercentage: gemini5h,

@@ -123,13 +123,14 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
             }
 
             let modelName = current.activeModel ?? QuotaService.shared.getCurrentAntigravityModel()
+            let accountDisplay = current.currentDisplayName
             if pct < 0 {
-                button.toolTip = L10n.tr("menu.tooltip_error", current.email)
+                button.toolTip = L10n.tr("menu.tooltip_error", accountDisplay)
             } else if let wk = current.geminiWeeklyPercentage {
                 let weekStr = L10n.tr("menu.week_label", wk)
-                button.toolTip = "Antigravity Orbit: \(current.email)\nModel: \(modelName)\n(5h: \(pct)% • \(weekStr))"
+                button.toolTip = "Antigravity Orbit: \(accountDisplay)\nModel: \(modelName)\n(5h: \(pct)% • \(weekStr))"
             } else {
-                button.toolTip = "Antigravity Orbit: \(current.email)\nModel: \(modelName)\n(5h: \(pct)%)"
+                button.toolTip = "Antigravity Orbit: \(accountDisplay)\nModel: \(modelName)\n(5h: \(pct)%)"
             }
         } else {
             // Option 1: No active account -> Display "--% ⚪"
@@ -197,7 +198,7 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
 
         let threshold = ConfigManager.shared.config.thresholdPercentage
         if current.remainingPercentage >= 0 && current.remainingPercentage <= threshold {
-            print("[StatusBarController] Current account \(current.email) has \(current.remainingPercentage)% 5h-limit (<= \(threshold)%). Triggering auto-rotation...")
+            print("[StatusBarController] Current account \(current.currentDisplayName) has \(current.remainingPercentage)% 5h-limit (<= \(threshold)%). Triggering auto-rotation...")
             let reason = L10n.tr("notif.reason_low_token", current.remainingPercentage, threshold)
             AccountRotator.shared.rotateToNext(currentStatuses: accountStatuses, reason: reason) { [weak self] success, newAcc in
                 if success {
@@ -240,7 +241,8 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
                 }
 
                 // Main Menu Account Row (Clean, single-line with quota badge, no tooltip popup)
-                let mainTitle = "\(acc.email)   (\(quotaBadge))"
+                let accountDisplay = acc.currentDisplayName
+                let mainTitle = "\(accountDisplay)   (\(quotaBadge))"
                 let accountItem = NSMenuItem(title: mainTitle, action: nil, keyEquivalent: "")
 
                 if acc.isCurrent {
@@ -273,6 +275,18 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
                 }
 
                 subMenu.addItem(NSMenuItem.separator())
+
+                let showAlias = ConfigManager.shared.config.showAccountAlias
+                if showAlias {
+                    let emailLineTitle = L10n.tr("menu.email_label", acc.email)
+                    subMenu.addItem(createStaticInfoMenuItem(icon: "📧", text: emailLineTitle))
+                } else {
+                    let trimmedName = acc.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !trimmedName.isEmpty && trimmedName.lowercased() != acc.email.lowercased() {
+                        let aliasLineTitle = L10n.tr("menu.alias_label", trimmedName)
+                        subMenu.addItem(createStaticInfoMenuItem(icon: "🏷️", text: aliasLineTitle))
+                    }
+                }
 
                 // 1. Quota details (Static view: bright, crisp, hover-blocked, click-blocked)
                 let quotaLineTitle = L10n.tr("menu.quota_label", quotaStr)
@@ -317,6 +331,15 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
         autoRotateItem.state = ConfigManager.shared.config.autoRotateEnabled ? .on : .off
         autoRotateItem.isEnabled = hasActiveAccount
         menu.addItem(autoRotateItem)
+
+        let showAliasItem = NSMenuItem(
+            title: L10n.tr("menu.show_alias_title"),
+            action: #selector(toggleShowAccountAlias),
+            keyEquivalent: ""
+        )
+        showAliasItem.target = self
+        showAliasItem.state = ConfigManager.shared.config.showAccountAlias ? .on : .off
+        menu.addItem(showAliasItem)
 
         let rotateNowItem = NSMenuItem(title: L10n.tr("menu.rotate_now"), action: #selector(manualRotateNext), keyEquivalent: "r")
         rotateNowItem.target = self
@@ -399,7 +422,7 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
                 guard let self = self else { return }
                 if success {
                     if let acc = self.accountStatuses.first(where: { $0.id == accountId }) {
-                        NotificationManager.shared.sendManualSwitchNotification(account: acc.email, quota: acc.remainingPercentage)
+                        NotificationManager.shared.sendManualSwitchNotification(account: acc.currentDisplayName, quota: acc.remainingPercentage)
                     }
                     self.updateStatusBarDisplay()
                     self.rebuildMenu()
@@ -423,6 +446,13 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
         ConfigManager.shared.toggleAutoRotate()
         rebuildMenu()
         SettingsWindowController.shared.syncRotationValues()
+    }
+
+    @objc private func toggleShowAccountAlias() {
+        ConfigManager.shared.toggleShowAccountAlias()
+        updateStatusBarDisplay()
+        rebuildMenu()
+        SettingsWindowController.shared.updateAccounts(accounts: self.accountStatuses)
     }
 
     @objc private func setThreshold(_ sender: NSMenuItem) {

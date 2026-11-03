@@ -8,6 +8,7 @@ public struct RotatorConfig: Codable {
     public var soundEnabled: Bool
     public var launchAtLogin: Bool
     public var language: String
+    public var showAccountAlias: Bool
 
     public static let `default` = RotatorConfig(
         thresholdPercentage: 10,
@@ -16,7 +17,8 @@ public struct RotatorConfig: Codable {
         notificationsEnabled: true,
         soundEnabled: true,
         launchAtLogin: true,
-        language: "vi"
+        language: "vi",
+        showAccountAlias: false
     )
 
     enum CodingKeys: String, CodingKey {
@@ -27,6 +29,7 @@ public struct RotatorConfig: Codable {
         case soundEnabled
         case launchAtLogin
         case language
+        case showAccountAlias
     }
 
     public init(
@@ -36,7 +39,8 @@ public struct RotatorConfig: Codable {
         notificationsEnabled: Bool,
         soundEnabled: Bool,
         launchAtLogin: Bool,
-        language: String = "vi"
+        language: String = "vi",
+        showAccountAlias: Bool = false
     ) {
         self.thresholdPercentage = thresholdPercentage
         self.checkIntervalSeconds = checkIntervalSeconds
@@ -45,6 +49,7 @@ public struct RotatorConfig: Codable {
         self.soundEnabled = soundEnabled
         self.launchAtLogin = launchAtLogin
         self.language = language
+        self.showAccountAlias = showAccountAlias
     }
 
     public init(from decoder: Decoder) throws {
@@ -56,6 +61,7 @@ public struct RotatorConfig: Codable {
         self.soundEnabled = try container.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? true
         self.launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? true
         self.language = try container.decodeIfPresent(String.self, forKey: .language) ?? "vi"
+        self.showAccountAlias = try container.decodeIfPresent(Bool.self, forKey: .showAccountAlias) ?? false
     }
 }
 
@@ -142,6 +148,16 @@ public class ConfigManager {
 
     public func setLaunchAtLogin(_ enabled: Bool) {
         config.launchAtLogin = enabled
+        save()
+    }
+
+    public func toggleShowAccountAlias() {
+        config.showAccountAlias.toggle()
+        save()
+    }
+
+    public func setShowAccountAlias(_ enabled: Bool) {
+        config.showAccountAlias = enabled
         save()
     }
 }
