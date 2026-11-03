@@ -201,8 +201,10 @@ public class LocalizationManager {
             "about.intro_body": "Antigravity Orbit is a high-performance, intelligent token manager and automated round-robin rotator for Antigravity IDE and Antigravity App. It continuously monitors Gemini quotas and ensures uninterrupted coding workflows.",
             "about.author": "Author",
             "about.author_val": "Happy Duong (phucduongqb@gmail.com)",
+            "about.license": "License",
+            "about.license_val": "MIT License",
             "about.copyright": "Copyright",
-            "about.copyright_val": "© 2026 Antigravity. All rights reserved."
+            "about.copyright_val": "© 2026 Happy Duong. Released under the MIT License."
         ],
 
         // MARK: 2. Tiếng Việt
@@ -326,8 +328,10 @@ public class LocalizationManager {
             "about.intro_body": "Antigravity Orbit là công cụ quản lý và tự động xoay vòng tài khoản Antigravity thông minh, giám sát hạn mức Gemini quota liên tục và tối ưu luồng lập trình không gián đoạn.",
             "about.author": "Tác giả",
             "about.author_val": "Happy Duong (phucduongqb@gmail.com)",
+            "about.license": "Giấy phép",
+            "about.license_val": "MIT License",
             "about.copyright": "Bản quyền",
-            "about.copyright_val": "© 2026 Antigravity. Bảo lưu mọi quyền."
+            "about.copyright_val": "© 2026 Happy Duong. Phát hành theo giấy phép MIT."
         ],
 
         // MARK: 3. 简体中文 (Simplified Chinese)
@@ -451,8 +455,10 @@ public class LocalizationManager {
             "about.intro_body": "Antigravity Orbit 是一款智能令牌管理与自动轮换工具，专为 Antigravity IDE 和 Antigravity 打造，确保编程工作流顺畅无中断。",
             "about.author": "开发者",
             "about.author_val": "Happy Duong (phucduongqb@gmail.com)",
+            "about.license": "开源协议",
+            "about.license_val": "MIT License",
             "about.copyright": "版权声明",
-            "about.copyright_val": "© 2026 Antigravity. 保留所有权利。"
+            "about.copyright_val": "© 2026 Happy Duong. 基于 MIT 协议开源。"
         ],
 
         // MARK: 4. 日本語 (Japanese)
@@ -576,8 +582,10 @@ public class LocalizationManager {
             "about.intro_body": "Antigravity Orbit は、Antigravity IDE と Antigravity のためのスマートトークン管理・自動ローテーションツールです。Gemini クォータを監視し、コーディング作業の中断を防ぎます。",
             "about.author": "開発者",
             "about.author_val": "Happy Duong (phucduongqb@gmail.com)",
+            "about.license": "ライセンス",
+            "about.license_val": "MIT License",
             "about.copyright": "著作権",
-            "about.copyright_val": "© 2026 Antigravity. All rights reserved."
+            "about.copyright_val": "© 2026 Happy Duong. MIT ライセンスに基づき公開。"
         ],
 
         // MARK: 5. 한국어 (Korean)
@@ -701,8 +709,10 @@ public class LocalizationManager {
             "about.intro_body": "Antigravity Orbit은 Antigravity IDE 및 Antigravity 앱을 위한 고성능 지능형 토큰 관리 및 자동 순환 도구입니다.",
             "about.author": "개발자",
             "about.author_val": "Happy Duong (phucduongqb@gmail.com)",
+            "about.license": "라이선스",
+            "about.license_val": "MIT License",
             "about.copyright": "저작권",
-            "about.copyright_val": "© 2026 Antigravity. All rights reserved."
+            "about.copyright_val": "© 2026 Happy Duong. MIT 라이선스에 따라 배포됩니다."
         ],
 
         // MARK: 6. Español (Spanish)
@@ -820,8 +830,10 @@ public class LocalizationManager {
             "about.intro_body": "Antigravity Orbit es una herramienta inteligente de administración de tokens y rotación automática para Antigravity IDE y Antigravity App.",
             "about.author": "Autor",
             "about.author_val": "Happy Duong (phucduongqb@gmail.com)",
+            "about.license": "Licencia",
+            "about.license_val": "Licencia MIT",
             "about.copyright": "Derechos de autor",
-            "about.copyright_val": "© 2026 Antigravity. Todos los derechos reservados."
+            "about.copyright_val": "© 2026 Happy Duong. Publicado bajo la licencia MIT."
         ],
 
         // MARK: 7. Français (French)
@@ -939,8 +951,10 @@ public class LocalizationManager {
             "about.intro_body": "Antigravity Orbit est un gestionnaire de jetons intelligent et un outil de rotation automatique conçu pour Antigravity IDE et Antigravity App.",
             "about.author": "Auteur",
             "about.author_val": "Happy Duong (phucduongqb@gmail.com)",
+            "about.license": "Licence",
+            "about.license_val": "Licence MIT",
             "about.copyright": "Droits d'auteur",
-            "about.copyright_val": "© 2026 Antigravity. Tous droits réservés."
+            "about.copyright_val": "© 2026 Happy Duong. Publié sous la licence MIT."
         ],
 
         // MARK: 8. Deutsch (German)
@@ -1058,8 +1072,10 @@ public class LocalizationManager {
             "about.intro_body": "Antigravity Orbit ist ein intelligenter Token-Manager und automatisches Rotationstool für Antigravity IDE und Antigravity App.",
             "about.author": "Autor",
             "about.author_val": "Happy Duong (phucduongqb@gmail.com)",
+            "about.license": "Lizenz",
+            "about.license_val": "MIT-Lizenz",
             "about.copyright": "Urheberrecht",
-            "about.copyright_val": "© 2026 Antigravity. Alle Rechte vorbehalten."
+            "about.copyright_val": "© 2026 Happy Duong. Veröffentlicht unter der MIT-Lizenz."
         ],
 
         // MARK: 9. Português (Portuguese)
@@ -1177,8 +1193,10 @@ public class LocalizationManager {
             "about.intro_body": "O Antigravity Orbit é um gerenciador de tokens inteligente e ferramenta de rotação automática para Antigravity IDE e Antigravity App.",
             "about.author": "Autor",
             "about.author_val": "Happy Duong (phucduongqb@gmail.com)",
+            "about.license": "Licença",
+            "about.license_val": "Licença MIT",
             "about.copyright": "Direitos autorais",
-            "about.copyright_val": "© 2026 Antigravity. Todos os direitos reservados."
+            "about.copyright_val": "© 2026 Happy Duong. Publicado sob a licença MIT."
         ],
 
         // MARK: 10. Русский (Russian)
@@ -1296,8 +1314,10 @@ public class LocalizationManager {
             "about.intro_body": "Antigravity Orbit — это интеллектуальный менеджер токенов и инструмент автоматической ротации для Antigravity IDE и Antigravity App.",
             "about.author": "Автор",
             "about.author_val": "Happy Duong (phucduongqb@gmail.com)",
+            "about.license": "Лицензия",
+            "about.license_val": "Лицензия MIT",
             "about.copyright": "Авторские права",
-            "about.copyright_val": "© 2026 Antigravity. Все права защищены."
+            "about.copyright_val": "© 2026 Happy Duong. Выпущено под лицензией MIT."
         ]
     ]
 }

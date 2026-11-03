@@ -29,7 +29,7 @@ Thay vì phải theo dõi hạn mức thủ công hay bất ngờ bị chặn re
 ## 🌟 Tính năng nổi bật
 
 ### 1. Thanh trạng thái Tinh gọn & Thân thiện với màn hình "Tai thỏ" (Notch-Friendly)
-* **Hiển thị trực quan**: Cực kỳ gọn gàng với biểu tượng Orbit độc quyền và phần trăm quota kèm chấm trạng thái màu:
+* **Hiển thị trực quan**: Cực kỳ gọn gàng với biểu tượng Orbit đặc trưng và phần trăm quota kèm chấm trạng thái màu:
   * `[Logo Orbit] 70% 🟢`: Hạn mức an toàn ($> 30\%$).
   * `[Logo Orbit] 25% 🟡`: Hạn mức cảnh báo ($10\% - 30\%$).
   * `[Logo Orbit] 8% 🔴`: Hạn mức tới hạn ($\le$ ngưỡng kích hoạt xoay vòng).
@@ -315,3 +315,10 @@ copies or substantial portions of the Software.
 * **Tác giả & Nhà phát triển**: Happy Duong ([phucduongqb@gmail.com](mailto:phucduongqb@gmail.com))
 * **Bản quyền**: Copyright © 2026 Happy Duong.
 * **Giấy phép**: Tự do sử dụng, sao chép, chỉnh sửa, phân phối và đóng góp theo các điều khoản của [MIT License](LICENSE).
+
+---
+
+## ⚠️ Tuyên bố miễn trừ trách nhiệm (Disclaimer)
+
+* **Antigravity Orbit** là dự án mã nguồn mở độc lập và không trực thuộc, không được tài trợ, ủy quyền hay liên kết chính thức với Google LLC hay đội ngũ phát triển Antigravity.
+* Các nhãn hiệu, tên thương mại và logo liên quan (*Google*, *Gemini*, *Antigravity*,...) thuộc sở hữu của các chủ sở hữu tương ứng, chỉ được nhắc đến trong tài liệu nhằm mục đích định danh và mô tả tính tương thích kỹ thuật của ứng dụng.
