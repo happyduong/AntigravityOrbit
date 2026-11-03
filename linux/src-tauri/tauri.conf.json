@@ -1,0 +1,66 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-cli/schema.json",
+  "productName": "Antigravity Orbit",
+  "version": "1.0.0",
+  "identifier": "com.antigravity.orbit",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Antigravity Orbit - Cài đặt",
+        "width": 780,
+        "height": 580,
+        "resizable": false,
+        "visible": false,
+        "center": true,
+        "decorations": true
+      }
+    ],
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "tooltip": "Antigravity Orbit"
+    },
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/64x64.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "shortDescription": "Google AI Quota Monitor & Smart Account Rotator",
+    "longDescription": "Optimized open-source system tray app that monitors quota and automatically rotates Google AI accounts for Antigravity IDE, agy CLI & Antigravity Desktop App.",
+    "category": "DeveloperTool",
+    "linux": {
+      "deb": {
+        "depends": [
+          "libayatana-appindicator3-1 | libappindicator3-1",
+          "libsecret-1-0",
+          "libwebkit2gtk-4.1-0 | libwebkit2gtk-4.0-37"
+        ],
+        "section": "devel"
+      },
+      "rpm": {
+        "depends": [
+          "libayatana-appindicator-gtk3",
+          "libsecret",
+          "webkit2gtk4.1"
+        ]
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    }
+  }
+}
+

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Antigravity Orbit</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand">
+      <img src="assets/AppIcon1024.png" alt="Orbit Logo" class="brand-logo">
+      <div class="brand-text">
+        <h1>Antigravity Orbit</h1>
+        <span class="version">v1.0.0 (Linux Edition)</span>
+      </div>
+    </div>
+    <div id="header-status-badge">
+      <span class="badge badge-standby" id="global-status-badge">⚪ Đang tải...</span>
+    </div>
+  </header>
+
+  <!-- Tabs Nav -->
+  <nav class="tabs-nav">
+    <button class="tab-btn active" data-tab="tab-accounts">
+      <span data-i18n="tab.accounts">Tài khoản</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-rotation">
+      <span data-i18n="tab.rotation">Xoay vòng</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-general">
+      <span data-i18n="tab.general">Hệ thống</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-about">
+      <span data-i18n="tab.about">Giới thiệu</span>
+    </button>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Tab 0: Accounts -->
+    <section id="tab-accounts" class="tab-pane active">
+      <div class="toolbar">
+        <div class="toolbar-actions">
+          <button class="btn btn-primary" id="btn-import-ide">
+            <span>✨</span>
+            <span data-i18n="btn.import">Import từ IDE</span>
+          </button>
+          <button class="btn" id="btn-google-login">
+            <span>➕</span>
+            <span data-i18n="btn.login">Đăng nhập Google</span>
+          </button>
+        </div>
+        <button class="btn" id="btn-refresh-quotas">
+          <span>🔄</span>
+          <span data-i18n="btn.refresh">Làm mới</span>
+        </button>
+      </div>
+
+      <div class="account-cards" id="accounts-container">
+        <!-- Rendered by app.js -->
+        <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+          Đang tải danh sách tài khoản...
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 1: Rotation -->
+    <section id="tab-rotation" class="tab-pane">
+      <div class="settings-section">
+        <h2 data-i18n="rotation.title">Cấu hình Xoay vòng Thông minh (Smart Round-Robin)</h2>
+
+        <div class="form-group">
+          <div class="form-label-group">
+            <span class="form-label" data-i18n="rotation.auto_enable">Bật tự động xoay vòng tài khoản</span>
+            <span class="form-desc" data-i18n="rotation.auto_desc">Tự động chuyển sang tài khoản có quota tốt nhất khi cạn hạn mức</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="cfg-auto-rotate">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-group">
+            <span class="form-label" data-i18n="rotation.threshold">Ngưỡng kích hoạt xoay vòng</span>
+            <span class="form-desc" data-i18n="rotation.threshold_desc">Tự động chuyển khi hạn mức 5h còn dưới mức này</span>
+          </div>
+          <select id="cfg-threshold">
+            <option value="5">5%</option>
+            <option value="10" selected>10% (Khuyến nghị)</option>
+            <option value="15">15%</option>
+            <option value="20">20%</option>
+            <option value="25">25%</option>
+            <option value="30">30%</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-group">
+            <span class="form-label" data-i18n="rotation.interval">Chu kỳ quét hạn mức</span>
+            <span class="form-desc" data-i18n="rotation.interval_desc">Khoảng thời gian kiểm tra lại quota thực tế từ API</span>
+          </div>
+          <select id="cfg-interval">
+            <option value="15">15 giây</option>
+            <option value="30">30 giây</option>
+            <option value="60" selected>60 giây (Mặc định)</option>
+            <option value="120">2 phút</option>
+            <option value="300">5 phút</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: General & System -->
+    <section id="tab-general" class="tab-pane">
+      <div class="settings-section">
+        <h2 data-i18n="general.title">Cài đặt Chung & Khởi động</h2>
+
+        <div class="form-group">
+          <div class="form-label-group">
+            <span class="form-label" data-i18n="general.lang">Ngôn ngữ giao diện</span>
+            <span class="form-desc">Lựa chọn ngôn ngữ hiển thị trên App & System Tray</span>
+          </div>
+          <select id="cfg-language">
+            <option value="vi">Tiếng Việt</option>
+            <option value="en">English</option>
+            <option value="zh-Hans">简体中文</option>
+            <option value="ja">日本語</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-group">
+            <span class="form-label" data-i18n="general.autostart">Khởi động cùng hệ điều hành</span>
+            <span class="form-desc" data-i18n="general.autostart_desc">Tạo dịch vụ XDG Autostart tự động chạy khi đăng nhập Linux</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="cfg-autostart" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-group">
+            <span class="form-label" data-i18n="general.notif">Thông báo trên màn hình</span>
+            <span class="form-desc" data-i18n="general.notif_desc">Gửi thông báo desktop khi xoay vòng hoặc đổi tài khoản</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="cfg-notifications" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-group">
+            <span class="form-label" data-i18n="general.sound">Âm thanh thông báo</span>
+            <span class="form-desc" data-i18n="general.sound_desc">Phát chuông thông báo khi có sự kiện</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="cfg-sound" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: About -->
+    <section id="tab-about" class="tab-pane">
+      <div class="settings-section about-box">
+        <img src="assets/AppIcon1024.png" alt="App Icon" class="about-logo">
+        <h2>Antigravity Orbit</h2>
+        <span class="badge badge-pro">Linux Edition • Tauri v2</span>
+        <p style="margin-top: 14px;" data-i18n="about.desc">
+          Ứng dụng mã nguồn mở tối ưu, tự động giám sát quota và xoay vòng tài khoản Google AI Pro / Ultra cho Antigravity IDE, agy CLI & Desktop App trên hệ điều hành Linux.
+        </p>
+
+        <div class="about-links">
+          <a class="link" href="https://github.com/phucduong/AntigravityOrbit" target="_blank" data-i18n="about.docs">Tài liệu GitHub</a>
+          <span style="color: var(--text-muted)">•</span>
+          <span class="link" data-i18n="about.license">Giấy phép MIT</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
+

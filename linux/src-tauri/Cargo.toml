@@ -1,0 +1,31 @@
+[package]
+name = "antigravity-orbit"
+version = "1.0.0"
+description = "Antigravity Orbit for Linux - Google AI Quota Monitor & Smart Account Rotator"
+authors = ["Antigravity Orbit Authors"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+tokio = { version = "1", features = ["full"] }
+uuid = { version = "1.0", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+base64 = "0.22"
+open = "5.3"
+notify-rust = "4.11"
+fs2 = "0.4"
+dirs = "6.0"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "z"
+strip = true
+

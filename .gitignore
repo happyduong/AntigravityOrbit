@@ -2,3 +2,10 @@
 build/
 *.app
 main
+target/
+**/target/
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+

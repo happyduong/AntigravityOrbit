@@ -1,0 +1,15 @@
+{
+  "name": "antigravity-orbit-linux",
+  "version": "1.0.0",
+  "description": "Antigravity Orbit for Linux - Google AI Quota Monitor & Smart Account Rotator",
+  "private": true,
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/api": "^2.1.1",
+    "@tauri-apps/cli": "^2.1.2"
+  }
+}
+
