@@ -16,6 +16,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
     private var deleteAccountButton: NSButton?
     private var switchAccountButton: NSButton?
     private var editAliasButton: NSButton?
+    private var selectModelButton: NSButton?
     private var accountsShowAliasCheckbox: NSButton?
     private var accountsListHeaderLabel: NSTextField?
     private var accountsRefreshButton: NSButton?
@@ -683,7 +684,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         accView.addSubview(scrollView)
         self.accountsScrollView = scrollView
 
-        // Action Buttons Row 1: Set Active, Edit Alias & Delete (placed clearly BELOW scrollView)
+        // Action Buttons Row 1: Set Active, Edit Alias, Select Model & Delete (placed clearly BELOW scrollView)
         let scrollBottom = scrollFrame.origin.y
         let btnHeight: CGFloat = 28
         let btnRow1Y = scrollBottom - 14 - btnHeight
@@ -694,8 +695,8 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
             action: #selector(setActiveAccountClicked)
         )
         btnSwitch.bezelStyle = .rounded
-        btnSwitch.font = NSFont.systemFont(ofSize: 12, weight: .medium)
-        btnSwitch.frame = NSRect(x: padX, y: btnRow1Y, width: 195, height: btnHeight)
+        btnSwitch.font = NSFont.systemFont(ofSize: 11.5, weight: .medium)
+        btnSwitch.frame = NSRect(x: padX, y: btnRow1Y, width: 150, height: btnHeight)
         btnSwitch.isEnabled = false
         accView.addSubview(btnSwitch)
         self.switchAccountButton = btnSwitch
@@ -706,11 +707,23 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
             action: #selector(editAliasClicked)
         )
         btnEdit.bezelStyle = .rounded
-        btnEdit.font = NSFont.systemFont(ofSize: 12)
-        btnEdit.frame = NSRect(x: padX + 205, y: btnRow1Y, width: 195, height: btnHeight)
+        btnEdit.font = NSFont.systemFont(ofSize: 11.5)
+        btnEdit.frame = NSRect(x: padX + 160, y: btnRow1Y, width: 145, height: btnHeight)
         btnEdit.isEnabled = false
         accView.addSubview(btnEdit)
         self.editAliasButton = btnEdit
+
+        let btnModel = NSButton(
+            title: L10n.tr("settings.btn_select_model"),
+            target: self,
+            action: #selector(selectModelClicked)
+        )
+        btnModel.bezelStyle = .rounded
+        btnModel.font = NSFont.systemFont(ofSize: 11.5)
+        btnModel.frame = NSRect(x: padX + 315, y: btnRow1Y, width: 155, height: btnHeight)
+        btnModel.isEnabled = false
+        accView.addSubview(btnModel)
+        self.selectModelButton = btnModel
 
         let btnDel = NSButton(
             title: L10n.tr("settings.btn_delete_account"),
@@ -718,8 +731,8 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
             action: #selector(deleteAccountClicked)
         )
         btnDel.bezelStyle = .rounded
-        btnDel.font = NSFont.systemFont(ofSize: 12)
-        btnDel.frame = NSRect(x: padX + 410, y: btnRow1Y, width: 190, height: btnHeight)
+        btnDel.font = NSFont.systemFont(ofSize: 11.5)
+        btnDel.frame = NSRect(x: padX + 480, y: btnRow1Y, width: 140, height: btnHeight)
         btnDel.isEnabled = false
         accView.addSubview(btnDel)
         self.deleteAccountButton = btnDel
@@ -829,6 +842,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         accountsScrollView?.isHidden = !hasAccounts
         switchAccountButton?.isHidden = !hasAccounts
         editAliasButton?.isHidden = !hasAccounts
+        selectModelButton?.isHidden = !hasAccounts
         deleteAccountButton?.isHidden = !hasAccounts
         accountsActionSeparator?.isHidden = !hasAccounts
 
@@ -841,6 +855,7 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
         guard let tv = tableView else {
             btnSwitch.isEnabled = false
             editAliasButton?.isEnabled = false
+            selectModelButton?.isEnabled = false
             btnDel.isEnabled = false
             return
         }
@@ -849,10 +864,12 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
             let acc = accountsData[selectedRow]
             btnSwitch.isEnabled = !acc.isCurrent
             editAliasButton?.isEnabled = true
+            selectModelButton?.isEnabled = true
             btnDel.isEnabled = !acc.isCurrent
         } else {
             btnSwitch.isEnabled = false
             editAliasButton?.isEnabled = false
+            selectModelButton?.isEnabled = false
             btnDel.isEnabled = false
         }
     }
@@ -907,15 +924,10 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
             cellView.subtitleLabel.textColor = acc.isCurrent ? NSColor.systemBlue : NSColor.secondaryLabelColor
 
         case "ModelCol":
-            if let modelName = acc.activeModel, !modelName.isEmpty {
-                cellView.titleLabel.stringValue = modelName
-                cellView.titleLabel.font = acc.isCurrent ? NSFont.boldSystemFont(ofSize: 11.5) : NSFont.systemFont(ofSize: 11.5)
-                cellView.titleLabel.textColor = acc.isCurrent ? NSColor.labelColor : NSColor.secondaryLabelColor
-            } else {
-                cellView.titleLabel.stringValue = "--"
-                cellView.titleLabel.font = NSFont.systemFont(ofSize: 11.5)
-                cellView.titleLabel.textColor = NSColor.tertiaryLabelColor
-            }
+            let modelTitle = acc.displayModelName
+            cellView.titleLabel.stringValue = "🤖 \(modelTitle)"
+            cellView.titleLabel.font = acc.isCurrent ? NSFont.boldSystemFont(ofSize: 11.5) : NSFont.systemFont(ofSize: 11.5)
+            cellView.titleLabel.textColor = acc.isCurrent ? NSColor.labelColor : NSColor.secondaryLabelColor
 
             if acc.isCurrent {
                 cellView.subtitleLabel.stringValue = "● \(L10n.tr("settings.sub_active"))"
@@ -1047,6 +1059,90 @@ public class SettingsWindowController: NSObject, NSWindowDelegate, NSTableViewDa
                 if res.success {
                     self.onUpdateCallback?()
                 }
+            }
+        }
+    }
+
+    @objc private func selectModelClicked() {
+        guard let tv = tableView else { return }
+        let row = tv.selectedRow
+        guard row >= 0 && row < accountsData.count else { return }
+        let acc = accountsData[row]
+
+        let alert = NSAlert()
+        alert.messageText = L10n.tr("settings.select_model_title")
+        alert.informativeText = L10n.tr("settings.select_model_msg", acc.currentDisplayName)
+        alert.alertStyle = .informational
+
+        let popUp = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 320, height: 28), pullsDown: false)
+        popUp.font = NSFont.systemFont(ofSize: 12)
+
+        // Option: Auto / System Default
+        let autoItem = NSMenuItem(title: L10n.tr("model.auto"), action: nil, keyEquivalent: "")
+        autoItem.representedObject = ""
+        popUp.menu?.addItem(autoItem)
+
+        // Group: Google Gemini
+        popUp.menu?.addItem(NSMenuItem.separator())
+        let geminiHeader = NSMenuItem(title: "── Google Gemini ──", action: nil, keyEquivalent: "")
+        geminiHeader.isEnabled = false
+        popUp.menu?.addItem(geminiHeader)
+        for opt in AIModelCatalog.geminiModels {
+            let item = NSMenuItem(title: opt.displayName, action: nil, keyEquivalent: "")
+            item.representedObject = opt.id
+            popUp.menu?.addItem(item)
+        }
+
+        // Group: Anthropic Claude
+        popUp.menu?.addItem(NSMenuItem.separator())
+        let claudeHeader = NSMenuItem(title: "── Anthropic Claude ──", action: nil, keyEquivalent: "")
+        claudeHeader.isEnabled = false
+        popUp.menu?.addItem(claudeHeader)
+        for opt in AIModelCatalog.claudeModels {
+            let item = NSMenuItem(title: opt.displayName, action: nil, keyEquivalent: "")
+            item.representedObject = opt.id
+            popUp.menu?.addItem(item)
+        }
+
+        // Group: Other
+        popUp.menu?.addItem(NSMenuItem.separator())
+        let otherHeader = NSMenuItem(title: "── \(L10n.tr("model.group_other")) ──", action: nil, keyEquivalent: "")
+        otherHeader.isEnabled = false
+        popUp.menu?.addItem(otherHeader)
+        for opt in AIModelCatalog.otherModels {
+            let item = NSMenuItem(title: opt.displayName, action: nil, keyEquivalent: "")
+            item.representedObject = opt.id
+            popUp.menu?.addItem(item)
+        }
+
+        // Select current preference
+        let currentPref = acc.preferredModelId ?? ""
+        var found = false
+        for item in popUp.itemArray {
+            if (item.representedObject as? String) == currentPref {
+                popUp.select(item)
+                found = true
+                break
+            }
+        }
+        if !found {
+            popUp.selectItem(at: 0)
+        }
+
+        alert.accessoryView = popUp
+        alert.addButton(withTitle: L10n.tr("settings.btn_apply"))
+        alert.addButton(withTitle: L10n.tr("alert.btn_cancel"))
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            let selectedModelId = (popUp.selectedItem?.representedObject as? String) ?? ""
+            let res = AccountManager.shared.updateAccountModel(id: acc.id, modelId: selectedModelId)
+            showAlert(
+                title: res.success ? L10n.tr("alert.success") : L10n.tr("alert.error"),
+                message: res.message,
+                style: res.success ? .informational : .warning
+            )
+            if res.success {
+                self.onUpdateCallback?()
             }
         }
     }

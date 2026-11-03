@@ -155,6 +155,56 @@ public struct LocalApiAccountsResponse: Codable {
     public let accounts: [LocalApiAccount]?
 }
 
+// Model Catalog & Options
+public struct AIModelOption: Equatable {
+    public let id: String
+    public let displayName: String
+    public let group: String
+
+    public init(id: String, displayName: String, group: String) {
+        self.id = id
+        self.displayName = displayName
+        self.group = group
+    }
+}
+
+public struct AIModelCatalog {
+    public static var auto: AIModelOption {
+        return AIModelOption(id: "", displayName: L10n.tr("model.auto"), group: "System")
+    }
+
+    public static let geminiModels: [AIModelOption] = [
+        AIModelOption(id: "MODEL_PLACEHOLDER_M318", displayName: "Gemini 3.8 Flash (High)", group: "Google Gemini"),
+        AIModelOption(id: "MODEL_PLACEHOLDER_M319", displayName: "Gemini 3.8 Flash (Medium)", group: "Google Gemini"),
+        AIModelOption(id: "MODEL_PLACEHOLDER_M320", displayName: "Gemini 3.8 Flash (Low)", group: "Google Gemini"),
+        AIModelOption(id: "gemini-3-pro-high", displayName: "Gemini 3 Pro (High)", group: "Google Gemini"),
+        AIModelOption(id: "MODEL_PLACEHOLDER_M198", displayName: "Gemini 3.5 Flash Lite", group: "Google Gemini")
+    ]
+
+    public static let claudeModels: [AIModelOption] = [
+        AIModelOption(id: "MODEL_PLACEHOLDER_M35", displayName: "Claude Sonnet 4.6 (Thinking)", group: "Anthropic Claude"),
+        AIModelOption(id: "MODEL_PLACEHOLDER_M26", displayName: "Claude Opus 4.6 (Thinking)", group: "Anthropic Claude")
+    ]
+
+    public static let otherModels: [AIModelOption] = [
+        AIModelOption(id: "MODEL_OPENAI_GPT_OSS_120B_MEDIUM", displayName: "GPT-OSS 120B (Medium)", group: "Other")
+    ]
+
+    public static var allModels: [AIModelOption] {
+        return [auto] + geminiModels + claudeModels + otherModels
+    }
+
+    public static func displayName(forId id: String?) -> String {
+        guard let id = id, !id.isEmpty else {
+            return L10n.tr("model.auto")
+        }
+        if let found = allModels.first(where: { $0.id == id }) {
+            return found.displayName
+        }
+        return QuotaService.shared.formatModelIdentifier(id)
+    }
+}
+
 // Unified Account Status for UI and Rotation
 public struct AccountStatus {
     public let id: String
@@ -171,6 +221,7 @@ public struct AccountStatus {
     public var activeModel: String?
     public var subscriptionTier: String?
     public var tierId: String?
+    public var preferredModelId: String?
 
     public init(
         id: String,
@@ -186,7 +237,8 @@ public struct AccountStatus {
         lastUpdated: Date? = Date(),
         activeModel: String? = nil,
         subscriptionTier: String? = nil,
-        tierId: String? = nil
+        tierId: String? = nil,
+        preferredModelId: String? = nil
     ) {
         self.id = id
         self.email = email
@@ -202,10 +254,17 @@ public struct AccountStatus {
         self.activeModel = activeModel
         self.subscriptionTier = subscriptionTier
         self.tierId = tierId
+        self.preferredModelId = preferredModelId
     }
 
     public var displayModelName: String {
-        return activeModel ?? "Standby"
+        if let pref = preferredModelId, !pref.isEmpty {
+            return AIModelCatalog.displayName(forId: pref)
+        }
+        if isCurrent {
+            return activeModel ?? "Gemini 3.8 Flash (High)"
+        }
+        return L10n.tr("model.auto")
     }
 
     public var displayTierName: String {

@@ -115,6 +115,7 @@ public class QuotaService {
                 } else {
                     resolvedName = acc.name ?? acc.email
                 }
+                let prefModel = accountsFile.accounts.first(where: { $0.id == acc.id })?.active_model ?? accountsFile.accounts.first(where: { $0.id == acc.id })?.model
                 let status = AccountStatus(
                     id: acc.id,
                     email: acc.email,
@@ -129,7 +130,8 @@ public class QuotaService {
                     lastUpdated: Date(),
                     activeModel: currentModel,
                     subscriptionTier: tierDisplayName,
-                    tierId: localTier
+                    tierId: localTier,
+                    preferredModelId: prefModel
                 )
                 results.append(status)
             }
@@ -184,6 +186,37 @@ public class QuotaService {
             }
         }
         return ""
+    }
+
+    public func applyAntigravityModel(modelId: String) {
+        let cleanId = modelId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanId.isEmpty else { return }
+
+        let statePath = homeDir.appendingPathComponent(".gemini")
+            .appendingPathComponent("antigravity")
+            .appendingPathComponent("antigravity_state.pbtxt")
+
+        guard FileManager.default.fileExists(atPath: statePath.path),
+              let content = try? String(contentsOf: statePath, encoding: .utf8) else {
+            return
+        }
+
+        var lines = content.components(separatedBy: .newlines)
+        var found = false
+        for i in 0..<lines.count {
+            let trimmed = lines[i].trimmingCharacters(in: .whitespaces)
+            if trimmed.starts(with: "last_selected_agent_model:") {
+                lines[i] = "last_selected_agent_model:  \(cleanId)"
+                found = true
+                break
+            }
+        }
+        if !found {
+            lines.append("last_selected_agent_model:  \(cleanId)")
+        }
+        let newContent = lines.joined(separator: "\n")
+        try? newContent.write(to: statePath, atomically: true, encoding: .utf8)
+        print("[QuotaService] Applied model '\(cleanId)' to antigravity_state.pbtxt")
     }
 
     public func getCurrentAntigravityModel() -> String {
@@ -411,7 +444,8 @@ public class QuotaService {
                 isCurrent: isActive,
                 remainingPercentage: -1,
                 activeModel: modelName,
-                subscriptionTier: cachedTier
+                subscriptionTier: cachedTier,
+                preferredModelId: acc.active_model ?? acc.model
             ))
             return
         }
@@ -434,7 +468,8 @@ public class QuotaService {
                         isCurrent: isActive,
                         remainingPercentage: -1,
                         activeModel: modelName,
-                        subscriptionTier: cachedTier
+                        subscriptionTier: cachedTier,
+                        preferredModelId: acc.active_model ?? acc.model
                     ))
                     return
                 }
@@ -489,7 +524,8 @@ public class QuotaService {
                             isCurrent: isActive,
                             remainingPercentage: -1,
                             activeModel: self.resolveModelForAccount(acc: acc, isActive: isActive),
-                            subscriptionTier: self.getCachedTierForAccount(acc: acc)
+                            subscriptionTier: self.getCachedTierForAccount(acc: acc),
+                            preferredModelId: acc.active_model ?? acc.model
                         ))
                         return
                     }
@@ -525,7 +561,8 @@ public class QuotaService {
                 remainingPercentage: (quotaSummaryResp == nil ? -1 : 100),
                 activeModel: modelName,
                 subscriptionTier: tierDisplayName,
-                tierId: resolvedTierId
+                tierId: resolvedTierId,
+                preferredModelId: acc.active_model ?? acc.model
             )
 
             if let summary = quotaSummaryResp, let groups = summary.groups {

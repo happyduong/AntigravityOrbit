@@ -230,6 +230,12 @@ public class AccountRotator {
         }
 
         print("[AccountRotator] Native switch to account [\(targetEmail)] successful.")
+
+        // 5. Apply target account's preferred model to Antigravity IDE if configured
+        if let targetModel = targetAccount.active_model ?? targetAccount.model, !targetModel.isEmpty {
+            QuotaService.shared.applyAntigravityModel(modelId: targetModel)
+        }
+
         return true
     }
 

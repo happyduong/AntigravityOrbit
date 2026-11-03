@@ -523,6 +523,63 @@ public class AccountManager {
         }
     }
 
+    // MARK: - 6. Update Account Model
+    public func updateAccountModel(id: String, modelId: String?) -> (success: Bool, message: String) {
+        var accountsFileModel = getOrCreateAccountsFile()
+        guard let targetIndex = accountsFileModel.accounts.firstIndex(where: { $0.id == id }) else {
+            return (false, "Không tìm thấy tài khoản cần cập nhật.")
+        }
+
+        let cleanModel: String? = {
+            if let m = modelId?.trimmingCharacters(in: .whitespacesAndNewlines), !m.isEmpty {
+                return m
+            }
+            return nil
+        }()
+
+        let existing = accountsFileModel.accounts[targetIndex]
+        let updated = ManagedAccount(
+            id: existing.id,
+            email: existing.email,
+            name: existing.name,
+            disabled: existing.disabled,
+            proxy_disabled: existing.proxy_disabled,
+            created_at: existing.created_at,
+            last_used: existing.last_used,
+            model: cleanModel,
+            active_model: cleanModel
+        )
+        accountsFileModel.accounts[targetIndex] = updated
+
+        // Update detail JSON file if exists
+        let detailFileUrl = accountsDir.appendingPathComponent("\(id).json")
+        if var detailJson = (try? Data(contentsOf: detailFileUrl)).flatMap({ try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }) {
+            if let m = cleanModel {
+                detailJson["model"] = m
+                detailJson["active_model"] = m
+            } else {
+                detailJson.removeValue(forKey: "model")
+                detailJson.removeValue(forKey: "active_model")
+            }
+            if let updatedData = try? JSONSerialization.data(withJSONObject: detailJson, options: .prettyPrinted) {
+                try? updatedData.write(to: detailFileUrl, options: .atomic)
+            }
+        }
+
+        // If this is currently the active IDE account, apply model to antigravity_state.pbtxt immediately
+        let activeId = accountsFileModel.current_ide_account_id ?? accountsFileModel.current_account_id ?? ""
+        if id == activeId, let m = cleanModel {
+            QuotaService.shared.applyAntigravityModel(modelId: m)
+        }
+
+        if saveAccountsFile(accountsFileModel) {
+            let modelLabel = AIModelCatalog.displayName(forId: cleanModel)
+            return (true, "Đã cập nhật model thành [\(modelLabel)] thành công!")
+        } else {
+            return (false, "Lỗi cập nhật tệp accounts.json.")
+        }
+    }
+
     private func saveAccountsFile(_ model: AccountsFile) -> Bool {
         do {
             let encoder = JSONEncoder()

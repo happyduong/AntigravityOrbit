@@ -297,15 +297,73 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
                 let tierLineTitle = L10n.tr("menu.tier_label", tierDisplayName)
                 subMenu.addItem(createStaticInfoMenuItem(icon: "🏷️", text: tierLineTitle))
 
-                // 3. Active Model
-                let modelDisplayName: String
-                if acc.isCurrent {
-                    modelDisplayName = acc.activeModel ?? QuotaService.shared.getCurrentAntigravityModel()
-                } else {
-                    modelDisplayName = acc.activeModel ?? "--"
+                // 3. Preferred Model selector flyout menu: "🤖 Model ưu tiên: [Model Name] ▶"
+                let currentModelDesc = acc.displayModelName
+                let modelMenuTitle = "\(L10n.tr("menu.preferred_model")): \(currentModelDesc)"
+                let modelParentItem = NSMenuItem(title: "🤖  \(modelMenuTitle)", action: nil, keyEquivalent: "")
+
+                let modelMenu = NSMenu()
+
+                // Option Auto
+                let autoItem = NSMenuItem(title: L10n.tr("model.auto"), action: #selector(accountModelSelected(_:)), keyEquivalent: "")
+                autoItem.target = self
+                autoItem.representedObject = ["accountId": acc.id, "modelId": ""]
+                let isAuto = (acc.preferredModelId == nil || acc.preferredModelId?.isEmpty == true)
+                if isAuto {
+                    autoItem.state = .on
                 }
-                let modelLineTitle = L10n.tr("menu.current_model", modelDisplayName)
-                subMenu.addItem(createStaticInfoMenuItem(icon: "🤖", text: modelLineTitle))
+                modelMenu.addItem(autoItem)
+
+                // Group: Google Gemini
+                modelMenu.addItem(NSMenuItem.separator())
+                let geminiHeader = NSMenuItem(title: "── Google Gemini ──", action: nil, keyEquivalent: "")
+                geminiHeader.isEnabled = false
+                modelMenu.addItem(geminiHeader)
+
+                for opt in AIModelCatalog.geminiModels {
+                    let mItem = NSMenuItem(title: opt.displayName, action: #selector(accountModelSelected(_:)), keyEquivalent: "")
+                    mItem.target = self
+                    mItem.representedObject = ["accountId": acc.id, "modelId": opt.id]
+                    if acc.preferredModelId == opt.id {
+                        mItem.state = .on
+                    }
+                    modelMenu.addItem(mItem)
+                }
+
+                // Group: Anthropic Claude
+                modelMenu.addItem(NSMenuItem.separator())
+                let claudeHeader = NSMenuItem(title: "── Anthropic Claude ──", action: nil, keyEquivalent: "")
+                claudeHeader.isEnabled = false
+                modelMenu.addItem(claudeHeader)
+
+                for opt in AIModelCatalog.claudeModels {
+                    let mItem = NSMenuItem(title: opt.displayName, action: #selector(accountModelSelected(_:)), keyEquivalent: "")
+                    mItem.target = self
+                    mItem.representedObject = ["accountId": acc.id, "modelId": opt.id]
+                    if acc.preferredModelId == opt.id {
+                        mItem.state = .on
+                    }
+                    modelMenu.addItem(mItem)
+                }
+
+                // Group: Other
+                modelMenu.addItem(NSMenuItem.separator())
+                let otherHeader = NSMenuItem(title: "── \(L10n.tr("model.group_other")) ──", action: nil, keyEquivalent: "")
+                otherHeader.isEnabled = false
+                modelMenu.addItem(otherHeader)
+
+                for opt in AIModelCatalog.otherModels {
+                    let mItem = NSMenuItem(title: opt.displayName, action: #selector(accountModelSelected(_:)), keyEquivalent: "")
+                    mItem.target = self
+                    mItem.representedObject = ["accountId": acc.id, "modelId": opt.id]
+                    if acc.preferredModelId == opt.id {
+                        mItem.state = .on
+                    }
+                    modelMenu.addItem(mItem)
+                }
+
+                modelParentItem.submenu = modelMenu
+                subMenu.addItem(modelParentItem)
 
                 accountItem.submenu = subMenu
                 menu.addItem(accountItem)
@@ -436,6 +494,16 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
                     alert.runModal()
                 }
             }
+        }
+    }
+
+    @objc private func accountModelSelected(_ sender: NSMenuItem) {
+        guard let info = sender.representedObject as? [String: String],
+              let accountId = info["accountId"],
+              let modelId = info["modelId"] else { return }
+        let res = AccountManager.shared.updateAccountModel(id: accountId, modelId: modelId)
+        if res.success {
+            refreshQuotas()
         }
     }
 
