@@ -48,6 +48,7 @@ public class SettingsViewModel: ObservableObject {
     @Published public var notificationsEnabled: Bool = ConfigManager.shared.config.notificationsEnabled
     @Published public var soundEnabled: Bool = ConfigManager.shared.config.soundEnabled
     @Published public var currentLanguage: AppLanguage = LocalizationManager.shared.currentLanguage
+    @Published public var popoverLayoutStyle: PopoverLayoutStyle = ConfigManager.shared.config.popoverLayoutStyle
     @Published public var hoveredAccountId: String? = nil
 
     // Action Closures
@@ -67,6 +68,7 @@ public class SettingsViewModel: ObservableObject {
     public var onToggleNotifications: (() -> Void)?
     public var onToggleSound: (() -> Void)?
     public var onSetLanguage: ((AppLanguage) -> Void)?
+    public var onSetPopoverLayoutStyle: ((PopoverLayoutStyle) -> Void)?
     public var onOpenDesktopApp: (() -> Void)?
     public var onOpenIde: (() -> Void)?
 
@@ -84,6 +86,20 @@ public class SettingsViewModel: ObservableObject {
             name: .avatarDidChange,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePopoverLayoutChanged),
+            name: .popoverLayoutDidChange,
+            object: nil
+        )
+    }
+
+    @objc private func handlePopoverLayoutChanged() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.popoverLayoutStyle = ConfigManager.shared.config.popoverLayoutStyle
+            self.objectWillChange.send()
+        }
     }
 
     @objc private func handleLanguageChanged() {
@@ -110,6 +126,7 @@ public class SettingsViewModel: ObservableObject {
         self.notificationsEnabled = cfg.notificationsEnabled
         self.soundEnabled = cfg.soundEnabled
         self.currentLanguage = LocalizationManager.shared.currentLanguage
+        self.popoverLayoutStyle = cfg.popoverLayoutStyle
     }
 
     public func updateAccounts(accounts: [AccountStatus]) {
@@ -838,6 +855,67 @@ private struct SystemTabPane: View {
 
             // Grouped Settings Card
             VStack(spacing: 12) {
+                // Popover Layout Style Selector
+                VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L10n.tr("settings.popover_style_title"))
+                            .font(.system(size: 12.5, weight: .semibold))
+                            .foregroundColor(.primary)
+
+                        Text(L10n.tr("settings.popover_style_subtitle"))
+                            .font(.system(size: 10.5))
+                            .foregroundColor(.secondary)
+                    }
+
+                    HStack(spacing: 8) {
+                        ForEach(PopoverLayoutStyle.allCases) { style in
+                            let isSelected = viewModel.popoverLayoutStyle == style
+                            Button(action: {
+                                viewModel.onSetPopoverLayoutStyle?(style)
+                            }) {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    HStack {
+                                        Image(systemName: style.icon)
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundColor(isSelected ? .white : .accentColor)
+
+                                        Spacer()
+
+                                        if isSelected {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.white)
+                                        }
+                                    }
+
+                                    Text(style.displayName)
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundColor(isSelected ? .white : .primary)
+                                        .lineLimit(1)
+
+                                    Text(style.descriptionText)
+                                        .font(.system(size: 9.5))
+                                        .foregroundColor(isSelected ? Color.white.opacity(0.85) : .secondary)
+                                        .lineLimit(3)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                .padding(10)
+                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                                .background(isSelected ? Color.accentColor : Color(NSColor.controlBackgroundColor).opacity(0.5))
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(isSelected ? Color.accentColor : Color(NSColor.separatorColor).opacity(0.4), lineWidth: isSelected ? 1.5 : 0.5)
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                }
+
+                Divider()
+                    .opacity(0.5)
+
                 // Language Selection
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {

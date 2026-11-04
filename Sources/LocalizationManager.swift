@@ -248,7 +248,22 @@ public class LocalizationManager {
             "about.app_version": "Version 1.0.0 • Native Swift & AppKit",
             "about.app_desc": "Optimized open-source Menu Bar app, automatically monitoring quotas and rotating Google AI Pro / Ultra accounts 24/7.",
             "about.author_label": "Author:",
-            "about.license_label": "License:"
+            "about.license_label": "License:",
+            "settings.popover_style_section": "POPOVER APPEARANCE",
+            "settings.popover_style_title": "Popover Layout Style",
+            "settings.popover_style_subtitle": "Select your preferred layout and compactness for the status bar popover",
+            "layout.streamlined": "Streamlined (macOS Native)",
+            "layout.streamlined_desc": "Clean and glanceable, following macOS Control Center aesthetics.",
+            "layout.raycast": "Command Palette (Raycast)",
+            "layout.raycast_desc": "Developer-centric unified table list with interactive shortcut bar.",
+            "layout.radial": "Radial Mini-Widget",
+            "layout.radial_desc": "Compact circular gauge inspired by Apple Watch widgets.",
+            "popover.active_badge": "ACTIVE",
+            "popover.reset_in": "Reset in %@",
+            "popover.next_candidate": "Next rotation candidate",
+            "popover.auto_rotate_short": "Auto-Rotate (<%d%%)",
+            "popover.rotate_now_short": "Rotate",
+            "popover.quick_switch": "QUICK SWITCH:"
         ],
 
         // MARK: 2. Tiếng Việt
@@ -419,7 +434,22 @@ public class LocalizationManager {
             "about.app_version": "Phiên bản 1.0.0 • Native Swift & AppKit",
             "about.app_desc": "Ứng dụng Menu Bar mã nguồn mở tối ưu, tự động giám sát quota và xoay vòng tài khoản Google AI Pro / Ultra 24/7.",
             "about.author_label": "Tác giả:",
-            "about.license_label": "Giấy phép:"
+            "about.license_label": "Giấy phép:",
+            "settings.popover_style_section": "GIAO DIỆN POPOVER",
+            "settings.popover_style_title": "Kiểu bố cục Popover",
+            "settings.popover_style_subtitle": "Tùy chọn phong cách hiển thị và độ tinh gọn của cửa sổ xem nhanh",
+            "layout.streamlined": "Tinh gọn (Chuẩn macOS)",
+            "layout.streamlined_desc": "Thiết kế hiện đại, thoáng mắt theo phong cách macOS Control Center.",
+            "layout.raycast": "Danh sách lệnh (Kiểu Raycast)",
+            "layout.raycast_desc": "Bảng so sánh tất cả tài khoản kèm thanh phím tắt phong cách Raycast.",
+            "layout.radial": "Đồng hồ tròn (Mini Widget)",
+            "layout.radial_desc": "Mặt đo hình tròn siêu gọn lấy cảm hứng từ Apple Watch.",
+            "popover.active_badge": "ĐANG DÙNG",
+            "popover.reset_in": "Đổi sau %@",
+            "popover.next_candidate": "Tài khoản kế tiếp",
+            "popover.auto_rotate_short": "Tự xoay vòng (<%d%%)",
+            "popover.rotate_now_short": "Xoay ngay",
+            "popover.quick_switch": "CHUYỂN NHANH:"
         ],
 
         // MARK: 3. 简体中文 (Simplified Chinese)

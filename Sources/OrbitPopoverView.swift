@@ -5,6 +5,7 @@ import AppKit
 public enum ToolbarTooltip: Equatable {
     case refresh
     case settings
+    case style
     case quit
 }
 
@@ -16,6 +17,7 @@ public class OrbitViewModel: ObservableObject {
     @Published public var thresholdPercentage: Int = ConfigManager.shared.config.thresholdPercentage
     @Published public var showAccountAlias: Bool = ConfigManager.shared.config.showAccountAlias
     @Published public var currentLanguage: AppLanguage = LocalizationManager.shared.currentLanguage
+    @Published public var layoutStyle: PopoverLayoutStyle = ConfigManager.shared.config.popoverLayoutStyle
     @Published public var spinDegree: Double = 0
     @Published public var hoveredAccountId: String? = nil
     @Published public var isRotateHovered: Bool = false
@@ -33,6 +35,7 @@ public class OrbitViewModel: ObservableObject {
     public var onSelectLanguage: ((AppLanguage) -> Void)?
     public var onLoginBrowserOAuth: (() -> Void)?
     public var onImportIde: (() -> Void)?
+    public var onSelectLayoutStyle: ((PopoverLayoutStyle) -> Void)?
 
     public init() {
         NotificationCenter.default.addObserver(
@@ -45,6 +48,12 @@ public class OrbitViewModel: ObservableObject {
             self,
             selector: #selector(handleAvatarChanged),
             name: .avatarDidChange,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleLayoutChanged),
+            name: .popoverLayoutDidChange,
             object: nil
         )
     }
@@ -62,6 +71,13 @@ public class OrbitViewModel: ObservableObject {
         }
     }
 
+    @objc private func handleLayoutChanged() {
+        DispatchQueue.main.async { [weak self] in
+            self?.layoutStyle = ConfigManager.shared.config.popoverLayoutStyle
+            self?.objectWillChange.send()
+        }
+    }
+
     public func update(
         accounts: [AccountStatus],
         isRefreshing: Bool,
@@ -74,6 +90,7 @@ public class OrbitViewModel: ObservableObject {
         self.thresholdPercentage = threshold
         self.showAccountAlias = ConfigManager.shared.config.showAccountAlias
         self.currentLanguage = LocalizationManager.shared.currentLanguage
+        self.layoutStyle = ConfigManager.shared.config.popoverLayoutStyle
     }
 
     public var activeAccount: AccountStatus? {
@@ -89,7 +106,6 @@ public class OrbitViewModel: ObservableObject {
         guard let currentIndex = accounts.firstIndex(where: { $0.id == active.id }) else { return nil }
 
         let threshold = thresholdPercentage
-        // Try round-robin accounts with percentage > threshold
         for offset in 1..<accounts.count {
             let nextIndex = (currentIndex + offset) % accounts.count
             let candidate = accounts[nextIndex]
@@ -99,7 +115,6 @@ public class OrbitViewModel: ObservableObject {
             }
         }
 
-        // If all are <= threshold, pick the non-active account with highest percentage
         let nonActive = accounts.filter { $0.id != active.id }
         return nonActive.max(by: {
             ($0.gemini5hPercentage ?? $0.remainingPercentage) < ($1.gemini5hPercentage ?? $1.remainingPercentage)
@@ -107,7 +122,7 @@ public class OrbitViewModel: ObservableObject {
     }
 }
 
-// MARK: - Main Popover View
+// MARK: - Main Popover View (Router)
 public struct OrbitPopoverView: View {
     @ObservedObject public var viewModel: OrbitViewModel
 
@@ -116,39 +131,16 @@ public struct OrbitPopoverView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 12) {
-            // 1. Header Toolbar
-            HeaderToolbar(viewModel: viewModel)
-                .zIndex(100)
-
-            Divider()
-                .opacity(0.5)
-
-            // 2. Active Account Hero Card or Empty State
-            if let active = viewModel.activeAccount {
-                ActiveAccountHeroCard(account: active, viewModel: viewModel)
-            } else if viewModel.accounts.isEmpty {
-                NoAccountsView(viewModel: viewModel)
-            } else {
-                NoActiveAccountBanner(viewModel: viewModel)
+        Group {
+            switch viewModel.layoutStyle {
+            case .streamlined:
+                StreamlinedPopoverView(viewModel: viewModel)
+            case .raycast:
+                RaycastPopoverView(viewModel: viewModel)
+            case .radial:
+                RadialPopoverView(viewModel: viewModel)
             }
-
-            // 3. Standby Accounts List
-            if !viewModel.standbyAccounts.isEmpty {
-                StandbyAccountsSection(viewModel: viewModel)
-            }
-
-            // 4. Controls & Rotation
-            if !viewModel.accounts.isEmpty {
-                ControlsSection(viewModel: viewModel)
-            }
-
-            // 5. Footer Shortcuts & System
-            FooterBar(viewModel: viewModel)
         }
-        .padding(14)
-        .frame(width: 340)
-        .background(VisualEffectBackground())
     }
 }
 
@@ -165,416 +157,16 @@ public struct VisualEffectBackground: NSViewRepresentable {
     public func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
 
-// MARK: - Header Toolbar
-private struct HeaderToolbar: View {
-    @ObservedObject var viewModel: OrbitViewModel
-
-    var body: some View {
-        HStack(spacing: 8) {
-            // App Logo
-            if let img = loadStatusBarLogo() {
-                Image(nsImage: img)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 20, height: 20)
-            } else {
-                Image(systemName: "bolt.circle.fill")
-                    .resizable()
-                    .foregroundColor(.accentColor)
-                    .frame(width: 20, height: 20)
-            }
-
-            VStack(alignment: .leading, spacing: 1) {
-                HStack(spacing: 5) {
-                    Text("Antigravity Orbit")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.primary)
-
-                    Text("v1.0")
-                        .font(.system(size: 9.5, weight: .semibold, design: .monospaced))
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 1)
-                        .background(Color.accentColor.opacity(0.18))
-                        .foregroundColor(.accentColor)
-                        .cornerRadius(4)
-                }
-
-                Text(accountCountText)
-                    .font(.system(size: 10.5))
-                    .foregroundColor(.secondary)
-            }
-
-            Spacer()
-
-            // Refresh Button
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.6)) {
-                    viewModel.spinDegree += 360
-                }
-                viewModel.onRefresh?()
-            }) {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 12, weight: .medium))
-                    .rotationEffect(.degrees(viewModel.spinDegree))
-                    .frame(width: 24, height: 24)
-                    .background(Color.secondary.opacity(viewModel.activeToolbarTooltip == .refresh ? 0.15 : 0))
-                    .cornerRadius(5)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(PlainButtonStyle())
-            .onHover { hovering in
-                withAnimation(.easeInOut(duration: 0.12)) {
-                    viewModel.activeToolbarTooltip = hovering ? .refresh : nil
-                }
-            }
-            .overlay(
-                Group {
-                    if viewModel.activeToolbarTooltip == .refresh {
-                        ArrowTooltip(text: L10n.tr("menu.refresh_quota"))
-                            .offset(y: 28)
-                    }
-                },
-                alignment: .top
-            )
-
-            // Settings Button
-            Button(action: {
-                viewModel.onOpenSettings?(nil)
-            }) {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 12, weight: .medium))
-                    .frame(width: 24, height: 24)
-                    .background(Color.secondary.opacity(viewModel.activeToolbarTooltip == .settings ? 0.15 : 0))
-                    .cornerRadius(5)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(PlainButtonStyle())
-            .onHover { hovering in
-                withAnimation(.easeInOut(duration: 0.12)) {
-                    viewModel.activeToolbarTooltip = hovering ? .settings : nil
-                }
-            }
-            .overlay(
-                Group {
-                    if viewModel.activeToolbarTooltip == .settings {
-                        ArrowTooltip(text: L10n.tr("menu.settings"))
-                            .offset(y: 28)
-                    }
-                },
-                alignment: .top
-            )
-
-            // Quit Button
-            Button(action: {
-                viewModel.onQuit?()
-            }) {
-                Image(systemName: "xmark.circle")
-                    .font(.system(size: 12, weight: .medium))
-                    .frame(width: 24, height: 24)
-                    .background(Color.secondary.opacity(viewModel.activeToolbarTooltip == .quit ? 0.15 : 0))
-                    .cornerRadius(5)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(PlainButtonStyle())
-            .onHover { hovering in
-                withAnimation(.easeInOut(duration: 0.12)) {
-                    viewModel.activeToolbarTooltip = hovering ? .quit : nil
-                }
-            }
-            .overlay(
-                Group {
-                    if viewModel.activeToolbarTooltip == .quit {
-                        ArrowTooltip(text: L10n.tr("menu.quit"), arrowOffsetX: 6)
-                            .offset(x: -6, y: 28)
-                    }
-                },
-                alignment: .top
-            )
-        }
-    }
-
-    private var accountCountText: String {
-        let count = viewModel.accounts.count
-        if count == 0 {
-            return L10n.tr("menu.tooltip_no_accounts")
-        } else if count == 1 {
-            return "1 \(L10n.tr("settings.tab_accounts").lowercased())"
-        } else {
-            return "\(count) \(L10n.tr("settings.tab_accounts").lowercased())"
-        }
-    }
-
-    private func loadStatusBarLogo() -> NSImage? {
-        if let path = Bundle.main.path(forResource: "StatusBarLogo", ofType: "png"),
-           let img = NSImage(contentsOfFile: path) {
-            return img
-        }
-        if let path = Bundle.main.path(forResource: "AppIcon1024", ofType: "png"),
-           let img = NSImage(contentsOfFile: path) {
-            return img
-        }
-        return nil
-    }
-}
-
-// MARK: - Arrow Tooltip View
-private struct ArrowTooltip: View {
-    let text: String
-    var arrowOffsetX: CGFloat = 0
-
-    var body: some View {
-        VStack(spacing: -1) {
-            Image(systemName: "triangle.fill")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 8, height: 4.5)
-                .foregroundColor(Color(NSColor.controlBackgroundColor))
-                .offset(x: arrowOffsetX)
-
-            Text(text)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundColor(.primary)
-                .lineLimit(1)
-                .fixedSize()
-                .padding(.horizontal, 7)
-                .padding(.vertical, 3.5)
-                .background(Color(NSColor.controlBackgroundColor))
-                .cornerRadius(5)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 5)
-                        .stroke(Color.secondary.opacity(0.25), lineWidth: 0.5)
-                )
-        }
-        .shadow(color: Color.black.opacity(0.22), radius: 3, x: 0, y: 1.5)
-        .allowsHitTesting(false)
-    }
-}
-
-// MARK: - Active Account Hero Card
-private struct ActiveAccountHeroCard: View {
-    let account: AccountStatus
-    @ObservedObject var viewModel: OrbitViewModel
-
-    var body: some View {
-        VStack(spacing: 9) {
-            // Row 1: Active Pulse Indicator & Tier Badge
-            HStack {
-                HStack(spacing: 5) {
-                    Circle()
-                        .fill(Color.green)
-                        .frame(width: 7, height: 7)
-
-                    Text(L10n.tr("menu.active_account").uppercased())
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.green)
-                }
-
-                Spacer()
-
-                Text(account.displayTierName)
-                    .font(.system(size: 10, weight: .semibold))
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 2)
-                    .background(Color.purple.opacity(0.18))
-                    .foregroundColor(.purple)
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.purple.opacity(0.3), lineWidth: 0.5)
-                    )
-            }
-
-            // Row 2: Avatar & Account Names
-            HStack(spacing: 8) {
-                AccountAvatarView(
-                    accountId: account.id,
-                    pictureUrl: account.picture,
-                    displayName: account.displayName(showAlias: viewModel.showAccountAlias),
-                    isCurrent: true,
-                    size: 28
-                )
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(account.displayName(showAlias: viewModel.showAccountAlias))
-                        .font(.system(size: 12.5, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-
-                    if viewModel.showAccountAlias || account.name != account.email {
-                        Text(account.email)
-                            .font(.system(size: 10.5))
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-
-                Spacer()
-            }
-
-            // Row 3: Quota Gauges Box
-            VStack(spacing: 7) {
-                // 5-Hour Limit
-                VStack(spacing: 3) {
-                    HStack {
-                        Text(L10n.tr("popover.5h_limit"))
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(.primary)
-
-                        Spacer()
-
-                        if let countdown = formatCountdown(account.geminiResetTime) {
-                            Text("(Reset: \(countdown))")
-                                .font(.system(size: 10))
-                                .foregroundColor(.secondary)
-                        }
-
-                        Text("\(pct5h)%")
-                            .font(.system(size: 11.5, weight: .bold, design: .monospaced))
-                            .foregroundColor(quotaColor(pct5h))
-                    }
-
-                    // Progress Bar 5h
-                    QuotaProgressBar(percentage: pct5h, height: 6, tintColor: quotaColor(pct5h))
-                }
-
-                // Weekly Limit (if available)
-                if let weekly = account.geminiWeeklyPercentage {
-                    VStack(spacing: 3) {
-                        HStack {
-                            Text(L10n.tr("popover.weekly_limit"))
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(.primary)
-
-                            Spacer()
-
-                            if let countdown = formatCountdown(account.geminiWeeklyResetTime) {
-                                Text("(Reset: \(countdown))")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.secondary)
-                            }
-
-                            Text("\(weekly)%")
-                                .font(.system(size: 11.5, weight: .bold, design: .monospaced))
-                                .foregroundColor(Color.blue)
-                        }
-
-                        QuotaProgressBar(percentage: weekly, height: 6, tintColor: Color.blue.opacity(0.85))
-                    }
-                }
-            }
-            .padding(8)
-            .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
-            .cornerRadius(8)
-
-            // Row 4: Inline Model Selector Menu
-            HStack {
-                Text(L10n.tr("popover.model_label"))
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-
-                Spacer()
-
-                Menu {
-                    Button(action: {
-                        viewModel.onSelectModel?(account.id, "")
-                    }) {
-                        HStack {
-                            Text(L10n.tr("model.auto"))
-                            if account.preferredModelId == nil || account.preferredModelId?.isEmpty == true {
-                                Text("✓")
-                            }
-                        }
-                    }
-
-                    Divider()
-
-                    Section("Google Gemini") {
-                        ForEach(AIModelCatalog.geminiModels, id: \.id) { opt in
-                            Button(action: {
-                                viewModel.onSelectModel?(account.id, opt.id)
-                            }) {
-                                HStack {
-                                    Text(opt.displayName)
-                                    if account.preferredModelId == opt.id {
-                                        Text("✓")
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Divider()
-
-                    Section("Anthropic Claude") {
-                        ForEach(AIModelCatalog.claudeModels, id: \.id) { opt in
-                            Button(action: {
-                                viewModel.onSelectModel?(account.id, opt.id)
-                            }) {
-                                HStack {
-                                    Text(opt.displayName)
-                                    if account.preferredModelId == opt.id {
-                                        Text("✓")
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Divider()
-
-                    Section(L10n.tr("model.group_other")) {
-                        ForEach(AIModelCatalog.otherModels, id: \.id) { opt in
-                            Button(action: {
-                                viewModel.onSelectModel?(account.id, opt.id)
-                            }) {
-                                HStack {
-                                    Text(opt.displayName)
-                                    if account.preferredModelId == opt.id {
-                                        Text("✓")
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text("🤖 \(account.displayModelName)")
-                            .font(.system(size: 11, weight: .medium))
-                            .lineLimit(1)
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.system(size: 8))
-                            .opacity(0.6)
-                    }
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3.5)
-                    .background(Color.secondary.opacity(0.12))
-                    .cornerRadius(6)
-                }
-                .menuStyle(BorderlessButtonMenuStyle())
-                .menuIndicator(.hidden)
-            }
-        }
-        .padding(10)
-        .background(Color(NSColor.textBackgroundColor).opacity(0.45))
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color(NSColor.separatorColor).opacity(0.45), lineWidth: 0.5)
-        )
-    }
-
-    private var pct5h: Int {
-        return account.gemini5hPercentage ?? account.remainingPercentage
-    }
-
-    private func quotaColor(_ pct: Int) -> Color {
+// MARK: - UI Helpers
+public struct PopoverUIHelper {
+    public static func quotaColor(_ pct: Int, threshold: Int) -> Color {
         if pct < 0 { return .red }
-        if pct <= viewModel.thresholdPercentage { return .red }
+        if pct <= threshold { return .red }
         if pct <= 30 { return .orange }
         return .green
     }
 
-    private func formatCountdown(_ isoString: String?) -> String? {
+    public static func formatCountdown(_ isoString: String?) -> String? {
         guard let iso = isoString, !iso.isEmpty else { return nil }
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -596,6 +188,137 @@ private struct ActiveAccountHeroCard: View {
         } else {
             return "\(minutes)m"
         }
+    }
+
+    public static func loadAppLogo() -> NSImage? {
+        if let path = Bundle.main.path(forResource: "StatusBarLogo", ofType: "png"),
+           let img = NSImage(contentsOfFile: path) {
+            return img
+        }
+        if let path = Bundle.main.path(forResource: "AppIcon1024", ofType: "png"),
+           let img = NSImage(contentsOfFile: path) {
+            return img
+        }
+        return nil
+    }
+}
+
+// MARK: - Reusable Model Selector Menu
+private struct ReusableModelSelectorMenu: View {
+    let account: AccountStatus
+    @ObservedObject var viewModel: OrbitViewModel
+
+    var body: some View {
+        Menu {
+            Button(action: {
+                viewModel.onSelectModel?(account.id, "")
+            }) {
+                HStack {
+                    Text(L10n.tr("model.auto"))
+                    if account.preferredModelId == nil || account.preferredModelId?.isEmpty == true {
+                        Text("✓")
+                    }
+                }
+            }
+
+            Divider()
+
+            Section("Google Gemini") {
+                ForEach(AIModelCatalog.geminiModels, id: \.id) { opt in
+                    Button(action: {
+                        viewModel.onSelectModel?(account.id, opt.id)
+                    }) {
+                        HStack {
+                            Text(opt.displayName)
+                            if account.preferredModelId == opt.id {
+                                Text("✓")
+                            }
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            Section("Anthropic Claude") {
+                ForEach(AIModelCatalog.claudeModels, id: \.id) { opt in
+                    Button(action: {
+                        viewModel.onSelectModel?(account.id, opt.id)
+                    }) {
+                        HStack {
+                            Text(opt.displayName)
+                            if account.preferredModelId == opt.id {
+                                Text("✓")
+                            }
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            Section(L10n.tr("model.group_other")) {
+                ForEach(AIModelCatalog.otherModels, id: \.id) { opt in
+                    Button(action: {
+                        viewModel.onSelectModel?(account.id, opt.id)
+                    }) {
+                        HStack {
+                            Text(opt.displayName)
+                            if account.preferredModelId == opt.id {
+                                Text("✓")
+                            }
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Text("🤖 \(account.displayModelName)")
+                    .font(.system(size: 11, weight: .medium))
+                    .lineLimit(1)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 8))
+                    .opacity(0.6)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(Color.secondary.opacity(0.12))
+            .cornerRadius(6)
+        }
+        .menuStyle(BorderlessButtonMenuStyle())
+        .menuIndicator(.hidden)
+    }
+}
+
+// MARK: - Reusable Style Quick Menu
+private struct StyleQuickMenu: View {
+    @ObservedObject var viewModel: OrbitViewModel
+
+    var body: some View {
+        Menu {
+            Section(L10n.tr("settings.popover_style_title")) {
+                ForEach(PopoverLayoutStyle.allCases) { style in
+                    Button(action: {
+                        ConfigManager.shared.updatePopoverLayoutStyle(style)
+                    }) {
+                        HStack {
+                            Text(style.displayName)
+                            if viewModel.layoutStyle == style {
+                                Text("✓")
+                            }
+                        }
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "slider.horizontal.3")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.secondary)
+                .frame(width: 22, height: 22)
+                .contentShape(Rectangle())
+        }
+        .menuStyle(BorderlessButtonMenuStyle())
+        .menuIndicator(.hidden)
     }
 }
 
@@ -626,12 +349,211 @@ private struct QuotaProgressBar: View {
     }
 }
 
-// MARK: - Standby Accounts Section
-private struct StandbyAccountsSection: View {
+// ====================================================================
+// MARK: - LAYOUT 1: STREAMLINED GLANCEABLE (macOS Native / Apple HIG)
+// ====================================================================
+public struct StreamlinedPopoverView: View {
+    @ObservedObject public var viewModel: OrbitViewModel
+
+    public var body: some View {
+        VStack(spacing: 10) {
+            // 1. Header (Compact)
+            StreamlinedHeader(viewModel: viewModel)
+
+            // 2. Active Card or Empty State
+            if let active = viewModel.activeAccount {
+                StreamlinedActiveCard(account: active, viewModel: viewModel)
+            } else if viewModel.accounts.isEmpty {
+                NoAccountsView(viewModel: viewModel)
+            } else {
+                NoActiveAccountBanner(viewModel: viewModel)
+            }
+
+            // 3. Standby List (Clickable row)
+            if !viewModel.standbyAccounts.isEmpty {
+                StreamlinedStandbySection(viewModel: viewModel)
+            }
+
+            // 4. Unified Control Bar (1 Row)
+            if !viewModel.accounts.isEmpty {
+                StreamlinedControlBar(viewModel: viewModel)
+            }
+        }
+        .padding(12)
+        .frame(width: 340)
+        .background(VisualEffectBackground())
+    }
+}
+
+private struct StreamlinedHeader: View {
     @ObservedObject var viewModel: OrbitViewModel
 
     var body: some View {
-        VStack(spacing: 6) {
+        HStack(spacing: 8) {
+            if let active = viewModel.activeAccount {
+                AccountAvatarView(
+                    accountId: active.id,
+                    pictureUrl: active.picture,
+                    displayName: active.displayName(showAlias: viewModel.showAccountAlias),
+                    isCurrent: true,
+                    size: 22
+                )
+
+                VStack(alignment: .leading, spacing: 0.5) {
+                    HStack(spacing: 5) {
+                        Text(active.displayName(showAlias: viewModel.showAccountAlias))
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+
+                        Text(active.displayTierName)
+                            .font(.system(size: 9, weight: .semibold))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Color.purple.opacity(0.18))
+                            .foregroundColor(.purple)
+                            .cornerRadius(4)
+                    }
+
+                    Text(active.email)
+                        .font(.system(size: 9.5))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+            } else {
+                if let logo = PopoverUIHelper.loadAppLogo() {
+                    Image(nsImage: logo)
+                        .resizable()
+                        .frame(width: 18, height: 18)
+                }
+                Text("Antigravity Orbit")
+                    .font(.system(size: 12, weight: .bold))
+            }
+
+            Spacer()
+
+            // Header Toolbar Buttons
+            HStack(spacing: 2) {
+                // Style Switcher
+                StyleQuickMenu(viewModel: viewModel)
+
+                // Refresh Button
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.6)) {
+                        viewModel.spinDegree += 360
+                    }
+                    viewModel.onRefresh?()
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 11, weight: .medium))
+                        .rotationEffect(.degrees(viewModel.spinDegree))
+                        .foregroundColor(.secondary)
+                        .frame(width: 22, height: 22)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PlainButtonStyle())
+
+                // Settings Button
+                Button(action: {
+                    viewModel.onOpenSettings?(nil)
+                }) {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .frame(width: 22, height: 22)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+    }
+}
+
+private struct StreamlinedActiveCard: View {
+    let account: AccountStatus
+    @ObservedObject var viewModel: OrbitViewModel
+
+    var body: some View {
+        VStack(spacing: 8) {
+            // 5-Hour Progress
+            VStack(spacing: 3) {
+                HStack {
+                    Text(L10n.tr("popover.5h_limit"))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.primary)
+
+                    Spacer()
+
+                    if let countdown = PopoverUIHelper.formatCountdown(account.geminiResetTime) {
+                        Text(String(format: L10n.tr("popover.reset_in"), countdown))
+                            .font(.system(size: 9.5))
+                            .foregroundColor(.secondary)
+                    }
+
+                    Text("\(pct5h)%")
+                        .font(.system(size: 11.5, weight: .bold, design: .monospaced))
+                        .foregroundColor(PopoverUIHelper.quotaColor(pct5h, threshold: viewModel.thresholdPercentage))
+                }
+
+                QuotaProgressBar(percentage: pct5h, height: 5, tintColor: PopoverUIHelper.quotaColor(pct5h, threshold: viewModel.thresholdPercentage))
+            }
+
+            // Weekly Limit (if available)
+            if let weekly = account.geminiWeeklyPercentage {
+                VStack(spacing: 3) {
+                    HStack {
+                        Text(L10n.tr("popover.weekly_limit"))
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.primary)
+
+                        Spacer()
+
+                        if let countdown = PopoverUIHelper.formatCountdown(account.geminiWeeklyResetTime) {
+                            Text(String(format: L10n.tr("popover.reset_in"), countdown))
+                                .font(.system(size: 9.5))
+                                .foregroundColor(.secondary)
+                        }
+
+                        Text("\(weekly)%")
+                            .font(.system(size: 11.5, weight: .bold, design: .monospaced))
+                            .foregroundColor(Color.blue)
+                    }
+
+                    QuotaProgressBar(percentage: weekly, height: 5, tintColor: Color.blue.opacity(0.85))
+                }
+            }
+
+            // Model Selector Row
+            HStack {
+                Text(L10n.tr("popover.model_label"))
+                    .font(.system(size: 10.5))
+                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                ReusableModelSelectorMenu(account: account, viewModel: viewModel)
+            }
+            .padding(.top, 1)
+        }
+        .padding(9)
+        .background(Color(NSColor.textBackgroundColor).opacity(0.35))
+        .cornerRadius(9)
+        .overlay(
+            RoundedRectangle(cornerRadius: 9)
+                .stroke(Color(NSColor.separatorColor).opacity(0.35), lineWidth: 0.5)
+        )
+    }
+
+    private var pct5h: Int {
+        return account.gemini5hPercentage ?? account.remainingPercentage
+    }
+}
+
+private struct StreamlinedStandbySection: View {
+    @ObservedObject var viewModel: OrbitViewModel
+
+    var body: some View {
+        VStack(spacing: 5) {
             HStack {
                 Text(L10n.tr("popover.standby_accounts", viewModel.standbyAccounts.count))
                     .font(.system(size: 9.5, weight: .bold))
@@ -644,7 +566,7 @@ private struct StandbyAccountsSection: View {
                     viewModel.onOpenSettings?(0)
                 }) {
                     Text(L10n.tr("menu.account_settings"))
-                        .font(.system(size: 10))
+                        .font(.system(size: 9.5))
                         .foregroundColor(.accentColor)
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -653,17 +575,17 @@ private struct StandbyAccountsSection: View {
 
             if viewModel.standbyAccounts.count > 3 {
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 3) {
                         ForEach(viewModel.standbyAccounts, id: \.id) { acc in
-                            StandbyAccountRow(account: acc, viewModel: viewModel)
+                            StreamlinedStandbyRow(account: acc, viewModel: viewModel)
                         }
                     }
                 }
-                .frame(maxHeight: 165)
+                .frame(maxHeight: 160)
             } else {
-                VStack(spacing: 4) {
+                VStack(spacing: 3) {
                     ForEach(viewModel.standbyAccounts, id: \.id) { acc in
-                        StandbyAccountRow(account: acc, viewModel: viewModel)
+                        StreamlinedStandbyRow(account: acc, viewModel: viewModel)
                     }
                 }
             }
@@ -671,8 +593,7 @@ private struct StandbyAccountsSection: View {
     }
 }
 
-// MARK: - Standby Account Row
-private struct StandbyAccountRow: View {
+private struct StreamlinedStandbyRow: View {
     let account: AccountStatus
     @ObservedObject var viewModel: OrbitViewModel
 
@@ -682,56 +603,44 @@ private struct StandbyAccountRow: View {
 
     var body: some View {
         HStack(spacing: 7) {
-            // Status Dot
             Text(statusDot)
-                .font(.system(size: 8))
+                .font(.system(size: 7))
 
             AccountAvatarView(
                 accountId: account.id,
                 pictureUrl: account.picture,
                 displayName: account.displayName(showAlias: viewModel.showAccountAlias),
                 isCurrent: false,
-                size: 18
+                size: 16
             )
 
-            // Info
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 0.5) {
                 Text(account.displayName(showAlias: viewModel.showAccountAlias))
-                    .font(.system(size: 11.5, weight: .medium))
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
                 Text(quotaSubtext)
-                    .font(.system(size: 9.5))
+                    .font(.system(size: 9))
                     .foregroundColor(.secondary)
                     .lineLimit(1)
             }
 
             Spacer()
 
-            // Quota %
             Text("\(pct)%")
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
-                .foregroundColor(pctColor)
+                .font(.system(size: 10.5, weight: .bold, design: .monospaced))
+                .foregroundColor(PopoverUIHelper.quotaColor(pct, threshold: viewModel.thresholdPercentage))
 
-            // Switch Button (Visible on hover or compact)
-            Button(action: {
-                viewModel.onSwitchAccount?(account.id)
-            }) {
-                Text(L10n.tr("popover.btn_switch"))
-                    .font(.system(size: 9.5, weight: .semibold))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.accentColor.opacity(isHovered ? 0.9 : 0.7))
-                    .foregroundColor(.white)
-                    .cornerRadius(4)
-            }
-            .buttonStyle(PlainButtonStyle())
-            .opacity(isHovered ? 1.0 : 0.85)
+            Image(systemName: "arrow.right.circle.fill")
+                .font(.system(size: 12))
+                .foregroundColor(.accentColor)
+                .opacity(isHovered ? 1.0 : 0)
+                .frame(width: 14)
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(isHovered ? Color.secondary.opacity(0.12) : Color(NSColor.textBackgroundColor).opacity(0.2))
+        .padding(.vertical, 4.5)
+        .background(isHovered ? Color.secondary.opacity(0.12) : Color(NSColor.textBackgroundColor).opacity(0.18))
         .cornerRadius(6)
         .contentShape(Rectangle())
         .onHover { hovering in
@@ -751,16 +660,9 @@ private struct StandbyAccountRow: View {
     }
 
     private var statusDot: String {
-        if pct < 0 { return "🔴" }
-        if pct <= viewModel.thresholdPercentage { return "🔴" }
+        if pct < 0 || pct <= viewModel.thresholdPercentage { return "🔴" }
         if pct <= 30 { return "🟡" }
         return "🟢"
-    }
-
-    private var pctColor: Color {
-        if pct < 0 || pct <= viewModel.thresholdPercentage { return .red }
-        if pct <= 30 { return .orange }
-        return .green
     }
 
     private var quotaSubtext: String {
@@ -771,125 +673,610 @@ private struct StandbyAccountRow: View {
     }
 }
 
-// MARK: - Controls Section
-private struct ControlsSection: View {
+private struct StreamlinedControlBar: View {
     @ObservedObject var viewModel: OrbitViewModel
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Upper Row: Auto-Rotate Switch
-            HStack(spacing: 8) {
-                Image(systemName: "bolt.badge.automatic")
-                    .font(.system(size: 12.5, weight: .medium))
-                    .foregroundColor(viewModel.autoRotateEnabled ? .accentColor : .secondary)
-                    .frame(width: 18)
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(L10n.tr("popover.auto_rotate_title"))
-                        .font(.system(size: 11.5, weight: .medium))
-                        .foregroundColor(.primary)
-
-                    Text(L10n.tr("popover.auto_rotate_condition", viewModel.thresholdPercentage))
-                        .font(.system(size: 9.5))
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                Toggle("", isOn: Binding(
-                    get: { viewModel.autoRotateEnabled },
-                    set: { _ in viewModel.onToggleAutoRotate?() }
-                ))
-                .toggleStyle(SwitchToggleStyle())
-                .scaleEffect(0.72)
-                .labelsHidden()
+        HStack {
+            // Auto Rotate Toggle
+            Toggle(isOn: Binding(
+                get: { viewModel.autoRotateEnabled },
+                set: { _ in viewModel.onToggleAutoRotate?() }
+            )) {
+                Text(String(format: L10n.tr("popover.auto_rotate_short"), viewModel.thresholdPercentage))
+                    .font(.system(size: 10.5, weight: .medium))
+                    .foregroundColor(.secondary)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
+            .toggleStyle(SwitchToggleStyle())
+            .scaleEffect(0.72)
 
-            Divider()
-                .opacity(0.35)
+            Spacer()
 
-            // Lower Row: Manual Rotate Button
+            // Quick Rotate Button
             Button(action: {
                 viewModel.onRotateNow?()
             }) {
-                HStack(spacing: 8) {
+                HStack(spacing: 4) {
                     Image(systemName: "arrow.triangle.2.circlepath")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .frame(width: 18)
-
-                    VStack(alignment: .leading, spacing: 1.5) {
-                        Text(L10n.tr("menu.rotate_now"))
-                            .font(.system(size: 11.5, weight: .medium))
-                            .foregroundColor(.primary)
-
-                        HStack(spacing: 4) {
-                            Text("↳")
-                                .font(.system(size: 9.5, weight: .bold))
-                                .foregroundColor(.secondary)
-
-                            if let next = viewModel.nextRotationAccount {
-                                let pct = next.gemini5hPercentage ?? next.remainingPercentage
-                                Text(L10n.tr("popover.next_preview", next.displayName(showAlias: viewModel.showAccountAlias), pct))
-                                    .font(.system(size: 9.5))
-                                    .foregroundColor(pct > viewModel.thresholdPercentage ? .green : .orange)
-                                    .lineLimit(1)
-                            } else {
-                                Text(L10n.tr("popover.no_standby_account"))
-                                    .font(.system(size: 9.5))
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
-
-                    Spacer()
-
+                        .font(.system(size: 10, weight: .semibold))
+                    Text(L10n.tr("popover.rotate_now_short"))
+                        .font(.system(size: 10.5, weight: .medium))
                     Text("⌘R")
-                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                        .font(.system(size: 8.5, design: .monospaced))
                         .foregroundColor(.secondary)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1.5)
-                        .background(Color.secondary.opacity(0.12))
-                        .cornerRadius(3.5)
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 7)
-                .background(Color.secondary.opacity(viewModel.isRotateHovered ? 0.14 : 0.04))
-                .contentShape(Rectangle())
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3.5)
+                .background(Color.secondary.opacity(viewModel.isRotateHovered ? 0.16 : 0.08))
+                .cornerRadius(5)
             }
             .buttonStyle(PlainButtonStyle())
             .onHover { hovering in
                 viewModel.isRotateHovered = hovering
             }
-            .keyboardShortcut("r", modifiers: .command)
         }
-        .background(Color(NSColor.textBackgroundColor).opacity(0.35))
-        .cornerRadius(8)
+        .padding(.top, 2)
+        .padding(.horizontal, 2)
+    }
+}
+
+// ====================================================================
+// MARK: - LAYOUT 2: RAYCAST / COMMAND PALETTE (Developer Style)
+// ====================================================================
+public struct RaycastPopoverView: View {
+    @ObservedObject public var viewModel: OrbitViewModel
+
+    public var body: some View {
+        VStack(spacing: 8) {
+            // 1. Raycast Top Header
+            RaycastTopBar(viewModel: viewModel)
+
+            // 2. Unified Account List
+            if viewModel.accounts.isEmpty {
+                NoAccountsView(viewModel: viewModel)
+            } else {
+                RaycastAccountList(viewModel: viewModel)
+            }
+
+            // 3. Command Bar Footer
+            RaycastCommandFooter(viewModel: viewModel)
+        }
+        .padding(10)
+        .frame(width: 340)
+        .background(VisualEffectBackground())
+    }
+}
+
+private struct RaycastTopBar: View {
+    @ObservedObject var viewModel: OrbitViewModel
+
+    var body: some View {
+        HStack {
+            Text("ACCOUNTS (\(viewModel.accounts.count))")
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .foregroundColor(.secondary)
+                .tracking(0.6)
+
+            Spacer()
+
+            // Auto-rotate badge pill (clickable)
+            Button(action: {
+                viewModel.onToggleAutoRotate?()
+            }) {
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(viewModel.autoRotateEnabled ? Color.green : Color.gray)
+                        .frame(width: 5, height: 5)
+                    Text(viewModel.autoRotateEnabled ? String(format: "Auto: ON (<%d%%)", viewModel.thresholdPercentage) : "Auto: OFF")
+                        .font(.system(size: 9.5, weight: .semibold, design: .monospaced))
+                        .foregroundColor(viewModel.autoRotateEnabled ? .primary : .secondary)
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color.secondary.opacity(0.12))
+                .cornerRadius(4)
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            StyleQuickMenu(viewModel: viewModel)
+
+            Button(action: {
+                viewModel.onOpenSettings?(nil)
+            }) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(.horizontal, 2)
+        .padding(.bottom, 2)
+    }
+}
+
+private struct RaycastAccountList: View {
+    @ObservedObject var viewModel: OrbitViewModel
+
+    var body: some View {
+        VStack(spacing: 4) {
+            // Active Account Row
+            if let active = viewModel.activeAccount {
+                RaycastActiveRow(account: active, viewModel: viewModel)
+            }
+
+            // Standby Accounts Rows
+            if !viewModel.standbyAccounts.isEmpty {
+                if viewModel.standbyAccounts.count > 4 {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(spacing: 3) {
+                            ForEach(viewModel.standbyAccounts, id: \.id) { acc in
+                                RaycastStandbyRow(account: acc, viewModel: viewModel)
+                            }
+                        }
+                    }
+                    .frame(maxHeight: 180)
+                } else {
+                    VStack(spacing: 3) {
+                        ForEach(viewModel.standbyAccounts, id: \.id) { acc in
+                            RaycastStandbyRow(account: acc, viewModel: viewModel)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct RaycastActiveRow: View {
+    let account: AccountStatus
+    @ObservedObject var viewModel: OrbitViewModel
+
+    var body: some View {
+        VStack(spacing: 5) {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(Color.green)
+                    .frame(width: 6, height: 6)
+
+                Text(account.displayName(showAlias: viewModel.showAccountAlias))
+                    .font(.system(size: 11.5, weight: .bold))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+
+                Text(L10n.tr("popover.active_badge"))
+                    .font(.system(size: 8.5, weight: .bold, design: .monospaced))
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .background(Color.accentColor.opacity(0.2))
+                    .foregroundColor(.accentColor)
+                    .cornerRadius(3)
+
+                Spacer()
+
+                Text("\(pct5h)%")
+                    .font(.system(size: 11.5, weight: .bold, design: .monospaced))
+                    .foregroundColor(PopoverUIHelper.quotaColor(pct5h, threshold: viewModel.thresholdPercentage))
+
+                if let wk = account.geminiWeeklyPercentage {
+                    Text("/ \(wk)%")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundColor(Color.blue)
+                }
+            }
+
+            // Mini progress bar
+            QuotaProgressBar(percentage: pct5h, height: 3.5, tintColor: PopoverUIHelper.quotaColor(pct5h, threshold: viewModel.thresholdPercentage))
+
+            HStack {
+                Text("🤖 \(account.displayModelName)")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+
+                Spacer()
+
+                if let cd = PopoverUIHelper.formatCountdown(account.geminiResetTime) {
+                    Text(String(format: L10n.tr("popover.reset_in"), cd))
+                        .font(.system(size: 9.5))
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .padding(8)
+        .background(Color.accentColor.opacity(0.10))
+        .cornerRadius(7)
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color(NSColor.separatorColor).opacity(0.45), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: 7)
+                .stroke(Color.accentColor.opacity(0.3), lineWidth: 0.8)
         )
+    }
+
+    private var pct5h: Int {
+        return account.gemini5hPercentage ?? account.remainingPercentage
+    }
+}
+
+private struct RaycastStandbyRow: View {
+    let account: AccountStatus
+    @ObservedObject var viewModel: OrbitViewModel
+
+    private var isHovered: Bool {
+        return viewModel.hoveredAccountId == account.id
+    }
+
+    var body: some View {
+        HStack(spacing: 7) {
+            Circle()
+                .fill(Color.secondary.opacity(0.4))
+                .frame(width: 5, height: 5)
+
+            AccountAvatarView(
+                accountId: account.id,
+                pictureUrl: account.picture,
+                displayName: account.displayName(showAlias: viewModel.showAccountAlias),
+                isCurrent: false,
+                size: 15
+            )
+
+            Text(account.displayName(showAlias: viewModel.showAccountAlias))
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.primary)
+                .lineLimit(1)
+
+            Spacer()
+
+            Text("\(pct)%")
+                .font(.system(size: 10.5, weight: .semibold, design: .monospaced))
+                .foregroundColor(PopoverUIHelper.quotaColor(pct, threshold: viewModel.thresholdPercentage))
+
+            if let wk = account.geminiWeeklyPercentage {
+                Text("/ \(wk)%")
+                    .font(.system(size: 9.5, design: .monospaced))
+                    .foregroundColor(.secondary)
+            }
+
+            Text("↵")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundColor(.secondary)
+                .opacity(isHovered ? 1.0 : 0)
+                .frame(width: 10)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(isHovered ? Color.secondary.opacity(0.12) : Color.clear)
+        .cornerRadius(6)
+        .contentShape(Rectangle())
+        .onHover { hovering in
+            if hovering {
+                viewModel.hoveredAccountId = account.id
+            } else if viewModel.hoveredAccountId == account.id {
+                viewModel.hoveredAccountId = nil
+            }
+        }
+        .onTapGesture {
+            viewModel.onSwitchAccount?(account.id)
+        }
+    }
+
+    private var pct: Int {
+        return account.gemini5hPercentage ?? account.remainingPercentage
+    }
+}
+
+private struct RaycastCommandFooter: View {
+    @ObservedObject var viewModel: OrbitViewModel
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Button(action: {
+                if let next = viewModel.nextRotationAccount {
+                    viewModel.onSwitchAccount?(next.id)
+                }
+            }) {
+                HStack(spacing: 3) {
+                    Text("↵")
+                        .font(.system(size: 9, weight: .bold))
+                    Text(L10n.tr("popover.btn_switch"))
+                        .font(.system(size: 9.5, design: .monospaced))
+                }
+                .foregroundColor(.secondary)
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            Button(action: {
+                viewModel.onRotateNow?()
+            }) {
+                HStack(spacing: 3) {
+                    Text("⌘R")
+                        .font(.system(size: 8.5, weight: .bold, design: .monospaced))
+                    Text(L10n.tr("popover.rotate_now_short"))
+                        .font(.system(size: 9.5, design: .monospaced))
+                }
+                .foregroundColor(.secondary)
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            Spacer()
+
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.6)) {
+                    viewModel.spinDegree += 360
+                }
+                viewModel.onRefresh?()
+            }) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 9.5))
+                    .rotationEffect(.degrees(viewModel.spinDegree))
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(.top, 4)
+        .padding(.horizontal, 4)
+        .border(width: 0.5, edges: [.top], color: Color.secondary.opacity(0.15))
+    }
+}
+
+// ====================================================================
+// MARK: - LAYOUT 3: RADIAL MINI-WIDGET (Apple Watch Style)
+// ====================================================================
+public struct RadialPopoverView: View {
+    @ObservedObject public var viewModel: OrbitViewModel
+
+    public var body: some View {
+        VStack(spacing: 9) {
+            // 1. Top Bar
+            RadialTopBar(viewModel: viewModel)
+
+            // 2. Circular Gauge
+            if let active = viewModel.activeAccount {
+                RadialHeroGauge(account: active, viewModel: viewModel)
+            } else if viewModel.accounts.isEmpty {
+                NoAccountsView(viewModel: viewModel)
+            } else {
+                NoActiveAccountBanner(viewModel: viewModel)
+            }
+
+            // 3. Standby Quick Switch Chips
+            if !viewModel.standbyAccounts.isEmpty {
+                RadialQuickSwitchSection(viewModel: viewModel)
+            }
+
+            // 4. Bottom Actions
+            if !viewModel.accounts.isEmpty {
+                RadialBottomBar(viewModel: viewModel)
+            }
+        }
+        .padding(12)
+        .frame(width: 310)
+        .background(VisualEffectBackground())
+    }
+}
+
+private struct RadialTopBar: View {
+    @ObservedObject var viewModel: OrbitViewModel
+
+    var body: some View {
+        HStack {
+            if let logo = PopoverUIHelper.loadAppLogo() {
+                Image(nsImage: logo)
+                    .resizable()
+                    .frame(width: 16, height: 16)
+            }
+            Text("Orbit")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(.secondary)
+
+            Spacer()
+
+            StyleQuickMenu(viewModel: viewModel)
+
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.6)) {
+                    viewModel.spinDegree += 360
+                }
+                viewModel.onRefresh?()
+            }) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 10))
+                    .rotationEffect(.degrees(viewModel.spinDegree))
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            Button(action: {
+                viewModel.onOpenSettings?(nil)
+            }) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(.horizontal, 2)
+    }
+}
+
+private struct RadialHeroGauge: View {
+    let account: AccountStatus
+    @ObservedObject var viewModel: OrbitViewModel
+
+    var body: some View {
+        VStack(spacing: 8) {
+            // Circular Progress Ring
+            ZStack {
+                // Background Track
+                Circle()
+                    .stroke(Color.secondary.opacity(0.15), lineWidth: 7)
+                    .frame(width: 86, height: 86)
+
+                // 5-Hour Progress Arc
+                Circle()
+                    .trim(from: 0.0, to: CGFloat(min(max(pct5h, 0), 100)) / 100.0)
+                    .stroke(
+                        PopoverUIHelper.quotaColor(pct5h, threshold: viewModel.thresholdPercentage),
+                        style: StrokeStyle(lineWidth: 7, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 86, height: 86)
+                    .animation(.easeInOut(duration: 0.4), value: pct5h)
+
+                // Center Label
+                VStack(spacing: 0) {
+                    Text("\(pct5h)%")
+                        .font(.system(size: 19, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+
+                    if let countdown = PopoverUIHelper.formatCountdown(account.geminiResetTime) {
+                        Text(countdown)
+                            .font(.system(size: 8.5, weight: .medium))
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding(.top, 2)
+
+            // Account Name & Model
+            VStack(spacing: 2) {
+                Text(account.displayName(showAlias: viewModel.showAccountAlias))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+
+                HStack(spacing: 4) {
+                    Text(account.displayTierName)
+                        .font(.system(size: 9, weight: .semibold))
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 0.5)
+                        .background(Color.purple.opacity(0.18))
+                        .foregroundColor(.purple)
+                        .cornerRadius(3)
+
+                    if let wk = account.geminiWeeklyPercentage {
+                        Text("• Week: \(wk)%")
+                            .font(.system(size: 9.5))
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+
+            // Model Chip
+            ReusableModelSelectorMenu(account: account, viewModel: viewModel)
+        }
+    }
+
+    private var pct5h: Int {
+        return account.gemini5hPercentage ?? account.remainingPercentage
+    }
+}
+
+private struct RadialQuickSwitchSection: View {
+    @ObservedObject var viewModel: OrbitViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(L10n.tr("popover.quick_switch"))
+                .font(.system(size: 8.5, weight: .bold))
+                .foregroundColor(.secondary)
+                .tracking(0.5)
+                .padding(.horizontal, 2)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 5) {
+                    ForEach(viewModel.standbyAccounts, id: \.id) { acc in
+                        let pct = acc.gemini5hPercentage ?? acc.remainingPercentage
+                        Button(action: {
+                            viewModel.onSwitchAccount?(acc.id)
+                        }) {
+                            HStack(spacing: 4) {
+                                AccountAvatarView(
+                                    accountId: acc.id,
+                                    pictureUrl: acc.picture,
+                                    displayName: acc.displayName(showAlias: viewModel.showAccountAlias),
+                                    isCurrent: false,
+                                    size: 13
+                                )
+
+                                Text(acc.displayName(showAlias: viewModel.showAccountAlias))
+                                    .font(.system(size: 10, weight: .medium))
+                                    .lineLimit(1)
+
+                                Text("\(pct)%")
+                                    .font(.system(size: 9.5, weight: .bold, design: .monospaced))
+                                    .foregroundColor(PopoverUIHelper.quotaColor(pct, threshold: viewModel.thresholdPercentage))
+                            }
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3.5)
+                            .background(Color.secondary.opacity(0.12))
+                            .cornerRadius(5)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+            }
+        }
         .padding(.top, 2)
     }
 }
 
+private struct RadialBottomBar: View {
+    @ObservedObject var viewModel: OrbitViewModel
+
+    var body: some View {
+        HStack {
+            Toggle(isOn: Binding(
+                get: { viewModel.autoRotateEnabled },
+                set: { _ in viewModel.onToggleAutoRotate?() }
+            )) {
+                Text(viewModel.autoRotateEnabled ? "Auto" : "Manual")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
+            .toggleStyle(SwitchToggleStyle())
+            .scaleEffect(0.68)
+
+            Spacer()
+
+            Button(action: {
+                viewModel.onRotateNow?()
+            }) {
+                HStack(spacing: 3) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 9.5))
+                    Text(L10n.tr("popover.rotate_now_short"))
+                        .font(.system(size: 10, weight: .medium))
+                    Text("⌘R")
+                        .font(.system(size: 8, design: .monospaced))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background(Color.secondary.opacity(0.10))
+                .cornerRadius(5)
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(.top, 2)
+    }
+}
+
+// ====================================================================
 // MARK: - Empty States
+// ====================================================================
 private struct NoAccountsView: View {
     @ObservedObject var viewModel: OrbitViewModel
 
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: "person.crop.circle.badge.plus")
-                .font(.system(size: 26))
+                .font(.system(size: 24))
                 .foregroundColor(.secondary)
 
             Text(L10n.tr("settings.no_accounts_linked"))
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: 11.5, weight: .semibold))
 
             Text(L10n.tr("settings.no_accounts_desc"))
-                .font(.system(size: 10.5))
+                .font(.system(size: 10))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
@@ -898,12 +1285,12 @@ private struct NoAccountsView: View {
                     viewModel.onLoginBrowserOAuth?()
                 }) {
                     Text(L10n.tr("settings.btn_login_browser"))
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.system(size: 10.5, weight: .medium))
                         .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 3.5)
                         .background(Color.accentColor)
                         .foregroundColor(.white)
-                        .cornerRadius(6)
+                        .cornerRadius(5)
                 }
                 .buttonStyle(PlainButtonStyle())
 
@@ -911,20 +1298,20 @@ private struct NoAccountsView: View {
                     viewModel.onOpenSettings?(0)
                 }) {
                     Text(L10n.tr("menu.account_settings"))
-                        .font(.system(size: 11))
+                        .font(.system(size: 10.5))
                         .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 3.5)
                         .background(Color.secondary.opacity(0.15))
-                        .cornerRadius(6)
+                        .cornerRadius(5)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
-            .padding(.top, 4)
+            .padding(.top, 2)
         }
-        .padding(14)
+        .padding(12)
         .frame(maxWidth: .infinity)
-        .background(Color(NSColor.textBackgroundColor).opacity(0.3))
-        .cornerRadius(10)
+        .background(Color(NSColor.textBackgroundColor).opacity(0.25))
+        .cornerRadius(9)
     }
 }
 
@@ -932,11 +1319,11 @@ private struct NoActiveAccountBanner: View {
     @ObservedObject var viewModel: OrbitViewModel
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 5) {
             HStack {
                 Text("⚠️")
                 Text(L10n.tr("menu.unidentified_account"))
-                    .font(.system(size: 11.5, weight: .medium))
+                    .font(.system(size: 11, weight: .medium))
                 Spacer()
             }
 
@@ -945,61 +1332,62 @@ private struct NoActiveAccountBanner: View {
                     viewModel.onSwitchAccount?(first.id)
                 }) {
                     Text(L10n.tr("popover.activate_account", first.displayName(showAlias: viewModel.showAccountAlias)))
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.system(size: 10.5, weight: .semibold))
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 3.5)
                         .background(Color.accentColor)
                         .foregroundColor(.white)
-                        .cornerRadius(6)
+                        .cornerRadius(5)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
         }
-        .padding(10)
+        .padding(8)
         .background(Color.yellow.opacity(0.12))
-        .cornerRadius(8)
+        .cornerRadius(7)
     }
 }
 
-// MARK: - Footer Bar
-private struct FooterBar: View {
-    @ObservedObject var viewModel: OrbitViewModel
+// MARK: - View Extension for selective border
+extension View {
+    func border(width: CGFloat, edges: [Edge], color: Color) -> some View {
+        overlay(EdgeBorder(width: width, edges: edges).foregroundColor(color))
+    }
+}
 
-    var body: some View {
-        HStack {
-            // Quick Language Menu
-            Picker("", selection: Binding(
-                get: { viewModel.currentLanguage },
-                set: { lang in viewModel.onSelectLanguage?(lang) }
-            )) {
-                ForEach(AppLanguage.allCases, id: \.self) { lang in
-                    Text("\(lang.flag)  \(lang.displayName)").tag(lang)
+struct EdgeBorder: Shape {
+    var width: CGFloat
+    var edges: [Edge]
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        for edge in edges {
+            var x: CGFloat {
+                switch edge {
+                case .top, .bottom, .leading: return rect.minX
+                case .trailing: return rect.maxX - width
                 }
             }
-            .pickerStyle(MenuPickerStyle())
-            .labelsHidden()
-            .controlSize(.small)
-
-            Spacer()
-
-            // Subtle Shortcuts
-            HStack(spacing: 6) {
-                Text(L10n.tr("popover.shortcut_rotate"))
-                    .font(.system(size: 9.5, design: .monospaced))
-                    .foregroundColor(.secondary)
-
-                Text("•")
-                    .foregroundColor(.secondary)
-                    .font(.system(size: 8))
-
-                Text(L10n.tr("popover.shortcut_settings"))
-                    .font(.system(size: 9.5, design: .monospaced))
-                    .foregroundColor(.secondary)
-                    .onTapGesture {
-                        viewModel.onOpenSettings?(nil)
-                    }
+            var y: CGFloat {
+                switch edge {
+                case .top, .leading, .trailing: return rect.minY
+                case .bottom: return rect.maxY - width
+                }
             }
+            var w: CGFloat {
+                switch edge {
+                case .top, .bottom: return rect.width
+                case .leading, .trailing: return width
+                }
+            }
+            var h: CGFloat {
+                switch edge {
+                case .top, .bottom: return width
+                case .leading, .trailing: return rect.height
+                }
+            }
+            path.addRect(CGRect(x: x, y: y, width: w, height: h))
         }
-        .padding(.top, 2)
+        return path
     }
 }

@@ -9,6 +9,7 @@ public struct RotatorConfig: Codable {
     public var launchAtLogin: Bool
     public var language: String
     public var showAccountAlias: Bool
+    public var popoverLayoutStyle: PopoverLayoutStyle
 
     public static let `default` = RotatorConfig(
         thresholdPercentage: 10,
@@ -18,7 +19,8 @@ public struct RotatorConfig: Codable {
         soundEnabled: true,
         launchAtLogin: true,
         language: "vi",
-        showAccountAlias: false
+        showAccountAlias: false,
+        popoverLayoutStyle: .streamlined
     )
 
     enum CodingKeys: String, CodingKey {
@@ -30,6 +32,7 @@ public struct RotatorConfig: Codable {
         case launchAtLogin
         case language
         case showAccountAlias
+        case popoverLayoutStyle
     }
 
     public init(
@@ -40,7 +43,8 @@ public struct RotatorConfig: Codable {
         soundEnabled: Bool,
         launchAtLogin: Bool,
         language: String = "vi",
-        showAccountAlias: Bool = false
+        showAccountAlias: Bool = false,
+        popoverLayoutStyle: PopoverLayoutStyle = .streamlined
     ) {
         self.thresholdPercentage = thresholdPercentage
         self.checkIntervalSeconds = checkIntervalSeconds
@@ -50,6 +54,7 @@ public struct RotatorConfig: Codable {
         self.launchAtLogin = launchAtLogin
         self.language = language
         self.showAccountAlias = showAccountAlias
+        self.popoverLayoutStyle = popoverLayoutStyle
     }
 
     public init(from decoder: Decoder) throws {
@@ -62,6 +67,7 @@ public struct RotatorConfig: Codable {
         self.launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? true
         self.language = try container.decodeIfPresent(String.self, forKey: .language) ?? "vi"
         self.showAccountAlias = try container.decodeIfPresent(Bool.self, forKey: .showAccountAlias) ?? false
+        self.popoverLayoutStyle = try container.decodeIfPresent(PopoverLayoutStyle.self, forKey: .popoverLayoutStyle) ?? .streamlined
     }
 }
 
@@ -159,5 +165,11 @@ public class ConfigManager {
     public func setShowAccountAlias(_ enabled: Bool) {
         config.showAccountAlias = enabled
         save()
+    }
+
+    public func updatePopoverLayoutStyle(_ style: PopoverLayoutStyle) {
+        config.popoverLayoutStyle = style
+        save()
+        NotificationCenter.default.post(name: .popoverLayoutDidChange, object: nil)
     }
 }
