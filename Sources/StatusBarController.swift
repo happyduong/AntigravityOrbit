@@ -1,19 +1,25 @@
 import Foundation
 import AppKit
 import UniformTypeIdentifiers
+import SwiftUI
 
-public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation {
+public class StatusBarController: NSObject, NSPopoverDelegate {
     private var statusItem: NSStatusItem!
-    private var menu: NSMenu!
+    private var popover: NSPopover!
+    private var popoverHostingController: NSHostingController<OrbitPopoverView>!
+    private var viewModel: OrbitViewModel!
     private var timer: Timer?
     private var accountStatuses: [AccountStatus] = []
     private var isRefreshing = false
+    private var lastPopoverCloseTime: Date = Date.distantPast
 
     public override init() {
         super.init()
         _ = AccountManager.shared
+
+        setupViewModel()
+        setupPopover()
         setupStatusItem()
-        setupMenu()
         startTimer()
         refreshQuotas()
 
@@ -25,12 +31,57 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
         )
     }
 
-    @objc private func handleLanguageChange() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.updateStatusBarDisplay()
-            self.rebuildMenu()
+    // MARK: - Setup Components
+
+    private func setupViewModel() {
+        viewModel = OrbitViewModel()
+
+        viewModel.onRefresh = { [weak self] in
+            self?.refreshQuotas()
         }
+        viewModel.onRotateNow = { [weak self] in
+            self?.manualRotateNext()
+        }
+        viewModel.onSwitchAccount = { [weak self] accountId in
+            self?.manualSwitchAccountById(accountId)
+        }
+        viewModel.onSelectModel = { [weak self] accountId, modelId in
+            self?.updateModelForAccount(accountId: accountId, modelId: modelId)
+        }
+        viewModel.onToggleAutoRotate = { [weak self] in
+            self?.toggleAutoRotate()
+        }
+        viewModel.onOpenSettings = { [weak self] tab in
+            self?.showSettingsWindowWithTab(tab)
+        }
+        viewModel.onOpenAbout = { [weak self] in
+            self?.showAboutWindow()
+        }
+        viewModel.onQuit = { [weak self] in
+            self?.quitApp()
+        }
+        viewModel.onSelectLanguage = { [weak self] lang in
+            LocalizationManager.shared.setLanguage(lang)
+            self?.handleLanguageChange()
+        }
+        viewModel.onLoginBrowserOAuth = { [weak self] in
+            self?.actionLoginBrowserOAuth()
+        }
+        viewModel.onImportIde = { [weak self] in
+            self?.actionImportFromIde()
+        }
+    }
+
+    private func setupPopover() {
+        popover = NSPopover()
+        popover.behavior = .transient
+        popover.animates = true
+        popover.delegate = self
+
+        let rootView = OrbitPopoverView(viewModel: viewModel)
+        popoverHostingController = NSHostingController(rootView: rootView)
+        popover.contentViewController = popoverHostingController
+        popover.contentSize = NSSize(width: 340, height: 460)
     }
 
     private func setupStatusItem() {
@@ -48,16 +99,42 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
             ]))
             button.attributedTitle = attrTitle
             button.toolTip = "Antigravity Orbit"
+
+            button.target = self
+            button.action = #selector(handleStatusItemClick(_:))
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
     }
 
-    private func setupMenu() {
-        menu = NSMenu()
-        menu.autoenablesItems = false
-        menu.delegate = self
-        statusItem.menu = menu
-        rebuildMenu()
+    // MARK: - Status Bar Button & Popover Interaction
+
+    @objc private func handleStatusItemClick(_ sender: NSStatusBarButton) {
+        if popover.isShown {
+            popover.performClose(sender)
+        } else {
+            // Prevent immediate reopen if user clicked status item to dismiss
+            if Date().timeIntervalSince(lastPopoverCloseTime) < 0.25 {
+                return
+            }
+            showPopover(sender)
+        }
     }
+
+    private func showPopover(_ sender: NSStatusBarButton) {
+        updateViewModelState()
+        popover.contentViewController = popoverHostingController
+        popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .minY)
+        if let window = popover.contentViewController?.view.window {
+            window.makeKey()
+        }
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    public func popoverDidClose(_ notification: Notification) {
+        lastPopoverCloseTime = Date()
+    }
+
+    // MARK: - Quota & Timer
 
     private func startTimer() {
         timer?.invalidate()
@@ -70,24 +147,29 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
     @objc public func refreshQuotas() {
         guard !isRefreshing else { return }
         isRefreshing = true
+        updateViewModelState()
 
         QuotaService.shared.fetchAllQuotas { [weak self] statuses in
             guard let self = self else { return }
             self.isRefreshing = false
             self.accountStatuses = statuses
 
-            print("[StatusBarController] Refreshed quotas for \(statuses.count) accounts:")
-            for s in statuses {
-                print("   • \(s.email): 5h=\(s.gemini5hPercentage?.description ?? "nil")%, weekly=\(s.geminiWeeklyPercentage?.description ?? "nil")%, remaining=\(s.remainingPercentage)%, current=\(s.isCurrent), tier=\(s.subscriptionTier ?? "nil"), model=\(s.activeModel ?? "nil")")
-            }
-
             DispatchQueue.main.async {
                 self.updateStatusBarDisplay()
-                self.rebuildMenu()
+                self.updateViewModelState()
                 self.checkAutoRotationThreshold()
                 SettingsWindowController.shared.updateAccounts(accounts: statuses)
             }
         }
+    }
+
+    private func updateViewModelState() {
+        viewModel.update(
+            accounts: accountStatuses,
+            isRefreshing: isRefreshing,
+            autoRotate: ConfigManager.shared.config.autoRotateEnabled,
+            threshold: ConfigManager.shared.config.thresholdPercentage
+        )
     }
 
     private func updateStatusBarDisplay() {
@@ -133,7 +215,6 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
                 button.toolTip = "Antigravity Orbit: \(accountDisplay)\nModel: \(modelName)\n(5h: \(pct)%)"
             }
         } else {
-            // Option 1: No active account -> Display "--% ⚪"
             levelIcon = "⚪"
             titleText = "--%"
             if accountStatuses.isEmpty {
@@ -208,239 +289,17 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
         }
     }
 
-    // MARK: - NSMenuDelegate
-    public func menuWillOpen(_ menu: NSMenu) {
-        rebuildMenu()
-    }
-
-    private func rebuildMenu() {
-        menu.autoenablesItems = false
-        menu.removeAllItems()
-
-        // 1. Round-Robin Accounts List (Active / Inactive)
-        if accountStatuses.isEmpty {
-            let unkItem = NSMenuItem(title: L10n.tr("menu.unidentified_account"), action: nil, keyEquivalent: "")
-            unkItem.isEnabled = false
-            menu.addItem(unkItem)
-        } else {
-            for acc in accountStatuses {
-                let pctVal = acc.gemini5hPercentage ?? acc.remainingPercentage
-                let quotaStr: String
-                let quotaBadge: String
-
-                if pctVal < 0 {
-                    quotaStr = L10n.tr("menu.token_error")
-                    quotaBadge = "⚠️"
-                } else if let wk = acc.geminiWeeklyPercentage {
-                    let weekStr = L10n.tr("menu.week_label", wk)
-                    quotaStr = "5h: \(pctVal)% • \(weekStr)"
-                    quotaBadge = pctVal > 50 ? "\(pctVal)% 🟢" : (pctVal > 20 ? "\(pctVal)% 🟡" : "\(pctVal)% 🔴")
-                } else {
-                    quotaStr = "5h: \(pctVal)%"
-                    quotaBadge = pctVal > 50 ? "\(pctVal)% 🟢" : (pctVal > 20 ? "\(pctVal)% 🟡" : "\(pctVal)% 🔴")
-                }
-
-                // Main Menu Account Row (Clean, single-line with quota badge, no tooltip popup)
-                let accountDisplay = acc.currentDisplayName
-                let mainTitle = "\(accountDisplay)   (\(quotaBadge))"
-                let accountItem = NSMenuItem(title: mainTitle, action: nil, keyEquivalent: "")
-
-                if acc.isCurrent {
-                    accountItem.state = .on
-                    accountItem.attributedTitle = NSAttributedString(
-                        string: mainTitle,
-                        attributes: [
-                            .foregroundColor: NSColor.systemGreen
-                        ]
-                    )
-                }
-
-                // Native Hierarchical Submenu (Flyout)
-                let subMenu = NSMenu()
-                subMenu.autoenablesItems = false
-
-                // Action: Active status or switch to this account
-                if acc.isCurrent {
-                    let activeItem = createStaticStatusMenuItem(text: "✓  \(L10n.tr("menu.active_account"))")
-                    subMenu.addItem(activeItem)
-                } else {
-                    let switchItem = NSMenuItem(
-                        title: "🔄  \(L10n.tr("menu.switch_to_account"))",
-                        action: #selector(manualSwitchAccount(_:)),
-                        keyEquivalent: ""
-                    )
-                    switchItem.target = self
-                    switchItem.representedObject = acc.id
-                    subMenu.addItem(switchItem)
-                }
-
-                subMenu.addItem(NSMenuItem.separator())
-
-                let showAlias = ConfigManager.shared.config.showAccountAlias
-                if showAlias {
-                    let emailLineTitle = L10n.tr("menu.email_label", acc.email)
-                    subMenu.addItem(createStaticInfoMenuItem(icon: "📧", text: emailLineTitle))
-                } else {
-                    let trimmedName = acc.name.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !trimmedName.isEmpty && trimmedName.lowercased() != acc.email.lowercased() {
-                        let aliasLineTitle = L10n.tr("menu.alias_label", trimmedName)
-                        subMenu.addItem(createStaticInfoMenuItem(icon: "🏷️", text: aliasLineTitle))
-                    }
-                }
-
-                // 1. Quota details (Static view: bright, crisp, hover-blocked, click-blocked)
-                let quotaLineTitle = L10n.tr("menu.quota_label", quotaStr)
-                subMenu.addItem(createStaticInfoMenuItem(icon: "📊", text: quotaLineTitle))
-
-                // 2. Plan / Tier
-                let tierDisplayName = acc.subscriptionTier ?? L10n.tr("tier.free")
-                let tierLineTitle = L10n.tr("menu.tier_label", tierDisplayName)
-                subMenu.addItem(createStaticInfoMenuItem(icon: "🏷️", text: tierLineTitle))
-
-                // 3. Preferred Model selector flyout menu: "🤖 Model ưu tiên: [Model Name] ▶"
-                let currentModelDesc = acc.displayModelName
-                let modelMenuTitle = "\(L10n.tr("menu.preferred_model")): \(currentModelDesc)"
-                let modelParentItem = NSMenuItem(title: "🤖  \(modelMenuTitle)", action: nil, keyEquivalent: "")
-
-                let modelMenu = NSMenu()
-
-                // Option Auto
-                let autoItem = NSMenuItem(title: L10n.tr("model.auto"), action: #selector(accountModelSelected(_:)), keyEquivalent: "")
-                autoItem.target = self
-                autoItem.representedObject = ["accountId": acc.id, "modelId": ""]
-                let isAuto = (acc.preferredModelId == nil || acc.preferredModelId?.isEmpty == true)
-                if isAuto {
-                    autoItem.state = .on
-                }
-                modelMenu.addItem(autoItem)
-
-                // Group: Google Gemini
-                modelMenu.addItem(NSMenuItem.separator())
-                let geminiHeader = NSMenuItem(title: "── Google Gemini ──", action: nil, keyEquivalent: "")
-                geminiHeader.isEnabled = false
-                modelMenu.addItem(geminiHeader)
-
-                for opt in AIModelCatalog.geminiModels {
-                    let mItem = NSMenuItem(title: opt.displayName, action: #selector(accountModelSelected(_:)), keyEquivalent: "")
-                    mItem.target = self
-                    mItem.representedObject = ["accountId": acc.id, "modelId": opt.id]
-                    if acc.preferredModelId == opt.id {
-                        mItem.state = .on
-                    }
-                    modelMenu.addItem(mItem)
-                }
-
-                // Group: Anthropic Claude
-                modelMenu.addItem(NSMenuItem.separator())
-                let claudeHeader = NSMenuItem(title: "── Anthropic Claude ──", action: nil, keyEquivalent: "")
-                claudeHeader.isEnabled = false
-                modelMenu.addItem(claudeHeader)
-
-                for opt in AIModelCatalog.claudeModels {
-                    let mItem = NSMenuItem(title: opt.displayName, action: #selector(accountModelSelected(_:)), keyEquivalent: "")
-                    mItem.target = self
-                    mItem.representedObject = ["accountId": acc.id, "modelId": opt.id]
-                    if acc.preferredModelId == opt.id {
-                        mItem.state = .on
-                    }
-                    modelMenu.addItem(mItem)
-                }
-
-                // Group: Other
-                modelMenu.addItem(NSMenuItem.separator())
-                let otherHeader = NSMenuItem(title: "── \(L10n.tr("model.group_other")) ──", action: nil, keyEquivalent: "")
-                otherHeader.isEnabled = false
-                modelMenu.addItem(otherHeader)
-
-                for opt in AIModelCatalog.otherModels {
-                    let mItem = NSMenuItem(title: opt.displayName, action: #selector(accountModelSelected(_:)), keyEquivalent: "")
-                    mItem.target = self
-                    mItem.representedObject = ["accountId": acc.id, "modelId": opt.id]
-                    if acc.preferredModelId == opt.id {
-                        mItem.state = .on
-                    }
-                    modelMenu.addItem(mItem)
-                }
-
-                modelParentItem.submenu = modelMenu
-                subMenu.addItem(modelParentItem)
-
-                accountItem.submenu = subMenu
-                menu.addItem(accountItem)
-            }
+    @objc private func handleLanguageChange() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.updateStatusBarDisplay()
+            self.updateViewModelState()
         }
-
-        // Account Settings item right below the accounts list
-        let accountSettingsItem = NSMenuItem(title: L10n.tr("menu.account_settings"), action: #selector(showAccountSettings), keyEquivalent: "")
-        accountSettingsItem.target = self
-        menu.addItem(accountSettingsItem)
-
-        menu.addItem(NSMenuItem.separator())
-
-        // 2. Core Actions
-        let hasActiveAccount = accountStatuses.contains(where: { $0.isCurrent })
-
-        let autoRotateItem = NSMenuItem(
-            title: L10n.tr("settings.auto_rotate_title"),
-            action: #selector(toggleAutoRotate),
-            keyEquivalent: ""
-        )
-        autoRotateItem.target = self
-        autoRotateItem.state = ConfigManager.shared.config.autoRotateEnabled ? .on : .off
-        autoRotateItem.isEnabled = hasActiveAccount
-        menu.addItem(autoRotateItem)
-
-        let rotateNowItem = NSMenuItem(title: L10n.tr("menu.rotate_now"), action: #selector(manualRotateNext), keyEquivalent: "r")
-        rotateNowItem.target = self
-        rotateNowItem.isEnabled = hasActiveAccount && (accountStatuses.count > 1)
-        menu.addItem(rotateNowItem)
-
-        let refreshItem = NSMenuItem(title: L10n.tr("menu.refresh_quota"), action: #selector(refreshQuotas), keyEquivalent: "")
-        refreshItem.target = self
-        refreshItem.isEnabled = hasActiveAccount
-        menu.addItem(refreshItem)
-
-        menu.addItem(NSMenuItem.separator())
-
-        // 3. Utilities & System
-        // Language Submenu for 1-click quick language switching
-        let langSubmenu = NSMenu()
-        for lang in AppLanguage.allCases {
-            let item = NSMenuItem(
-                title: "\(lang.flag)  \(lang.displayName)",
-                action: #selector(selectLanguageFromMenu(_:)),
-                keyEquivalent: ""
-            )
-            item.target = self
-            item.representedObject = lang.rawValue
-            if lang == LocalizationManager.shared.currentLanguage {
-                item.state = .on
-            }
-            langSubmenu.addItem(item)
-        }
-        let langParentItem = NSMenuItem(title: L10n.tr("menu.language_switcher"), action: nil, keyEquivalent: "")
-        langParentItem.submenu = langSubmenu
-        menu.addItem(langParentItem)
-
-        let settingsItem = NSMenuItem(title: L10n.tr("menu.settings"), action: #selector(showSettingsWindow), keyEquivalent: ",")
-        settingsItem.target = self
-        menu.addItem(settingsItem)
-
-        let aboutItem = NSMenuItem(title: L10n.tr("menu.about"), action: #selector(showAboutWindow), keyEquivalent: "")
-        aboutItem.target = self
-        menu.addItem(aboutItem)
-
-        menu.addItem(NSMenuItem.separator())
-
-        // 4. Quit
-        let quitItem = NSMenuItem(title: L10n.tr("menu.quit"), action: #selector(quitApp), keyEquivalent: "q")
-        quitItem.target = self
-        menu.addItem(quitItem)
     }
 
     // MARK: - Actions
 
-    @objc private func manualRotateNext() {
+    @objc public func manualRotateNext() {
         let hasActiveAccount = accountStatuses.contains(where: { $0.isCurrent })
         guard hasActiveAccount && accountStatuses.count > 1 else { return }
 
@@ -450,7 +309,6 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
                 guard let self = self else { return }
                 if success {
                     self.updateStatusBarDisplay()
-                    self.rebuildMenu()
                     self.refreshQuotas()
                 } else {
                     let alert = NSAlert()
@@ -464,8 +322,7 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
         }
     }
 
-    @objc private func manualSwitchAccount(_ sender: NSMenuItem) {
-        guard let accountId = sender.representedObject as? String else { return }
+    public func manualSwitchAccountById(_ accountId: String) {
         AccountRotator.shared.switchToAccount(id: accountId) { [weak self] success in
             DispatchQueue.main.async {
                 guard let self = self else { return }
@@ -474,7 +331,6 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
                         NotificationManager.shared.sendManualSwitchNotification(account: acc.currentDisplayName, quota: acc.remainingPercentage)
                     }
                     self.updateStatusBarDisplay()
-                    self.rebuildMenu()
                     self.refreshQuotas()
                 } else {
                     let alert = NSAlert()
@@ -488,83 +344,46 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
         }
     }
 
-    @objc private func accountModelSelected(_ sender: NSMenuItem) {
-        guard let info = sender.representedObject as? [String: String],
-              let accountId = info["accountId"],
-              let modelId = info["modelId"] else { return }
+    public func updateModelForAccount(accountId: String, modelId: String) {
         let res = AccountManager.shared.updateAccountModel(id: accountId, modelId: modelId)
         if res.success {
             refreshQuotas()
         }
     }
 
-    @objc private func toggleAutoRotate() {
+    @objc public func toggleAutoRotate() {
         let hasActiveAccount = accountStatuses.contains(where: { $0.isCurrent })
         guard hasActiveAccount else { return }
 
         ConfigManager.shared.toggleAutoRotate()
-        rebuildMenu()
+        updateViewModelState()
         SettingsWindowController.shared.syncRotationValues()
     }
 
-    @objc private func setThreshold(_ sender: NSMenuItem) {
-        ConfigManager.shared.updateThreshold(sender.tag)
-        rebuildMenu()
+    @objc public func showSettingsWindow() {
+        showSettingsWindowWithTab(nil)
     }
 
-    @objc private func setInterval(_ sender: NSMenuItem) {
-        ConfigManager.shared.updateCheckInterval(sender.tag)
-        startTimer()
-        rebuildMenu()
-    }
-
-    @objc private func toggleNotification() {
-        ConfigManager.shared.toggleNotifications()
-        rebuildMenu()
-    }
-
-    @objc private func toggleSound() {
-        ConfigManager.shared.toggleSound()
-        rebuildMenu()
-    }
-
-    @objc private func toggleLaunchAtLogin() {
-        let newState = !LaunchAtLoginManager.shared.isEnabled
-        LaunchAtLoginManager.shared.setEnabled(newState)
-        rebuildMenu()
-    }
-
-    // MARK: - Account Management Actions
-
-    @objc private func actionImportFromIde() {
-        let result = AccountManager.shared.importFromCurrentIdeLogin()
-        showAlert(title: result.success ? "Thành công" : "Thông báo", message: result.message, style: result.success ? .informational : .warning)
-        if result.success {
-            refreshQuotas()
+    public func showSettingsWindowWithTab(_ tab: Int?) {
+        if popover.isShown {
+            popover.performClose(nil)
+        }
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            SettingsWindowController.shared.showWindow(accounts: self.accountStatuses, initialTab: tab, onUpdate: { [weak self] in
+                self?.refreshQuotas()
+            })
         }
     }
 
-    @objc private func actionImportFromJson() {
-        DispatchQueue.main.async {
-            NSApp.activate(ignoringOtherApps: true)
-            let panel = NSOpenPanel()
-            panel.title = "Chọn tệp JSON tài khoản"
-            panel.allowedContentTypes = [.json]
-            panel.allowsMultipleSelection = false
-            panel.canChooseDirectories = false
-            panel.canChooseFiles = true
-
-            if panel.runModal() == .OK, let url = panel.url {
-                let result = AccountManager.shared.importFromJsonFile(url: url)
-                self.showAlert(title: result.success ? "Thành công" : "Lỗi", message: result.message, style: result.success ? .informational : .warning)
-                if result.success {
-                    self.refreshQuotas()
-                }
-            }
+    @objc public func showAboutWindow() {
+        if popover.isShown {
+            popover.performClose(nil)
         }
+        AboutWindowController.shared.showWindow()
     }
 
-    @objc private func actionLoginBrowserOAuth() {
+    @objc public func actionLoginBrowserOAuth() {
         OAuthServer.shared.startLoginFlow { [weak self] success, message in
             DispatchQueue.main.async {
                 self?.showAlert(
@@ -579,28 +398,11 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
         }
     }
 
-    @objc private func actionDeleteAccount(_ sender: NSMenuItem) {
-        guard let accountId = sender.representedObject as? String,
-              let acc = accountStatuses.first(where: { $0.id == accountId }) else { return }
-
-        DispatchQueue.main.async {
-            NSApp.activate(ignoringOtherApps: true)
-            let alert = NSAlert()
-            alert.messageText = L10n.tr("alert.delete_confirm_title")
-            alert.informativeText = L10n.tr("alert.delete_confirm_msg", acc.email)
-            alert.alertStyle = .critical
-
-            let delBtn = alert.addButton(withTitle: L10n.tr("alert.btn_delete"))
-            delBtn.hasDestructiveAction = true
-            alert.addButton(withTitle: L10n.tr("alert.btn_cancel"))
-
-            if alert.runModal() == .alertFirstButtonReturn {
-                let result = AccountManager.shared.deleteAccount(id: accountId)
-                self.showAlert(title: result.success ? L10n.tr("alert.success") : L10n.tr("alert.error"), message: result.message, style: result.success ? .informational : .warning)
-                if result.success {
-                    self.refreshQuotas()
-                }
-            }
+    @objc public func actionImportFromIde() {
+        let result = AccountManager.shared.importFromCurrentIdeLogin()
+        showAlert(title: result.success ? "Thành công" : "Thông báo", message: result.message, style: result.success ? .informational : .warning)
+        if result.success {
+            refreshQuotas()
         }
     }
 
@@ -616,140 +418,7 @@ public class StatusBarController: NSObject, NSMenuDelegate, NSMenuItemValidation
         }
     }
 
-    @objc private func selectLanguageFromMenu(_ sender: NSMenuItem) {
-        guard let rawVal = sender.representedObject as? String,
-              let lang = AppLanguage(rawValue: rawVal) else { return }
-        LocalizationManager.shared.setLanguage(lang)
-    }
-
-    @objc private func showAccountSettings() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            SettingsWindowController.shared.showWindow(accounts: self.accountStatuses, initialTab: 0, onUpdate: { [weak self] in
-                self?.refreshQuotas()
-            })
-        }
-    }
-
-    @objc private func showSettingsWindow() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            SettingsWindowController.shared.showWindow(accounts: self.accountStatuses, initialTab: nil, onUpdate: { [weak self] in
-                self?.refreshQuotas()
-            })
-        }
-    }
-
-    @objc private func showAboutWindow() {
-        AboutWindowController.shared.showWindow()
-    }
-
-    @objc private func openAntigravityApp() {
-        let appPath = "/Applications/Antigravity.app"
-        NSWorkspace.shared.open(URL(fileURLWithPath: appPath))
-    }
-
-    @objc private func openAntigravityIde() {
-        let idePath = "/Applications/Antigravity IDE.app"
-        NSWorkspace.shared.open(URL(fileURLWithPath: idePath))
-    }
-
-    @objc private func quitApp() {
+    @objc public func quitApp() {
         NSApplication.shared.terminate(nil)
-    }
-
-    // MARK: - Static (Non-Clickable, Non-Hoverable) Submenu Items
-
-    private func createStaticStatusMenuItem(text: String) -> NSMenuItem {
-        let item = NSMenuItem()
-        let font = NSFont.boldSystemFont(ofSize: 12.5)
-        let textSize = (text as NSString).size(withAttributes: [.font: font])
-        let width = max(270.0, ceil(textSize.width) + 36.0)
-        let height: CGFloat = 24.0
-
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: width, height: height))
-        container.autoresizingMask = [.width]
-
-        let label = NSTextField(labelWithString: text)
-        label.font = font
-        label.textColor = NSColor.systemGreen
-        label.isEditable = false
-        label.isSelectable = false
-        label.isBezeled = false
-        label.drawsBackground = false
-        label.frame = NSRect(x: 14, y: 4, width: width - 20, height: 18)
-        label.autoresizingMask = [.width]
-
-        container.addSubview(label)
-        item.view = container
-        return item
-    }
-
-    private func createStaticInfoMenuItem(icon: String, text: String) -> NSMenuItem {
-        let item = NSMenuItem()
-        let font = NSFont.systemFont(ofSize: 12.5, weight: .medium)
-        let fullText = "\(icon)  \(text)"
-        let textSize = (fullText as NSString).size(withAttributes: [.font: font])
-        let width = max(270.0, ceil(textSize.width) + 36.0)
-        let height: CGFloat = 22.0
-
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: width, height: height))
-        container.autoresizingMask = [.width]
-
-        let attr = NSMutableAttributedString()
-        if let colonIndex = text.firstIndex(of: ":") {
-            let labelPart = String(text[..<colonIndex]) + ":"
-            let valuePart = String(text[text.index(after: colonIndex)...])
-            attr.append(NSAttributedString(
-                string: "\(icon)  \(labelPart)",
-                attributes: [
-                    .font: NSFont.systemFont(ofSize: 12.5, weight: .medium),
-                    .foregroundColor: NSColor.secondaryLabelColor
-                ]
-            ))
-            attr.append(NSAttributedString(
-                string: valuePart,
-                attributes: [
-                    .font: NSFont.systemFont(ofSize: 12.5, weight: .semibold),
-                    .foregroundColor: NSColor.labelColor
-                ]
-            ))
-        } else {
-            attr.append(NSAttributedString(
-                string: fullText,
-                attributes: [
-                    .font: NSFont.systemFont(ofSize: 12.5, weight: .medium),
-                    .foregroundColor: NSColor.labelColor
-                ]
-            ))
-        }
-
-        let label = NSTextField(labelWithAttributedString: attr)
-        label.isEditable = false
-        label.isSelectable = false
-        label.isBezeled = false
-        label.drawsBackground = false
-        label.frame = NSRect(x: 14, y: 3, width: width - 20, height: 18)
-        label.autoresizingMask = [.width]
-
-        container.addSubview(label)
-        item.view = container
-        return item
-    }
-
-    // MARK: - NSMenuItemValidation
-
-    public func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
-        let hasActiveAccount = accountStatuses.contains(where: { $0.isCurrent })
-        if menuItem.action == #selector(toggleAutoRotate) {
-            return hasActiveAccount
-        }
-        if menuItem.action == #selector(manualRotateNext) {
-            return hasActiveAccount && (accountStatuses.count > 1)
-        }
-        if menuItem.action == #selector(refreshQuotas) {
-            return hasActiveAccount
-        }
-        return true
     }
 }

@@ -84,67 +84,77 @@ Thay vì phải theo dõi hạn mức thủ công hay bất ngờ bị chặn re
 
 ---
 
-### 5. Menu Thao tác Nhanh (Status Menu 1-Click)
+### 5. Giao diện Popover Dashboard Hiện đại (Status Popover 1-Click)
 
-Nhấp vào icon Menu Bar để mở menu điều khiển trực quan:
+Nhấp vào icon Menu Bar để mở Popover Dashboard với hiệu ứng kính mờ (Vibrancy) đậm chất macOS:
 
 ```text
-[✓] 1. primary@gmail.com
-       Quota: 5h: 85% • Tuần: 98%
-       Gói: Google AI Pro
-       Model: Gemini 3.8 Flash (High)
-    2. secondary@gmail.com
-       Quota: 5h: 92% • Tuần: 100%
-       Gói: Google AI Pro
-       Model: Standby
-    Cài đặt tài khoản...
-    ────────────────────────────────────────
-    [✓] Tự động xoay vòng tài khoản khi sắp hết token
-    Xoay vòng tài khoản ngay                ⌘R
-    Cập nhật Quota ngay
-    ────────────────────────────────────────
-    Ngôn ngữ ▸                              🇻🇳 Tiếng Việt
-    Cài đặt...                              ⌘,
-    Giới thiệu về Antigravity Orbit
-    ────────────────────────────────────────
-    Thoát                                   ⌘Q
+┌────────────────────────────────────────────────────────┐
+│  ⚡ Antigravity Orbit                  [🔄]  [⚙️]  [✕]  │
+├────────────────────────────────────────────────────────┤
+│ ┌────────────────────────────────────────────────────┐ │
+│ │ ● ĐANG HOẠT ĐỘNG                     Google AI Pro │ │
+│ │ primary@gmail.com                                  │ │
+│ │                                                    │ │
+│ │ 5 Giờ   [████████████████░░░░]  85% (Reset: 1h 24m)│ │
+│ │ Tuần    [████████████████████]  98%                │ │
+│ │                                                    │ │
+│ │ Model: [ 🤖 Gemini 3.8 Flash (High)              ▾]│ │
+│ └────────────────────────────────────────────────────┘ │
+│                                                        │
+│ TÀI KHOẢN DỰ PHÒNG (2)                      Quản lý... │
+│ ┌────────────────────────────────────────────────────┐ │
+│ │ 🟢 secondary@gmail.com             92%     [Chuyển]│ │
+│ │    5h: 92% • Tuần: 100%                            │ │
+│ └────────────────────────────────────────────────────┘ │
+│                                                        │
+│ [ 🔄 Tự động xoay vòng khi ≤ 10%              [ ON ] ] │
+│ ┌────────────────────────────────────────────────────┐ │
+│ │              [ ⟳ Xoay vòng tài khoản ngay (⌘R) ]    │ │
+│ └────────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────┘
 ```
 
-* **Danh sách tài khoản trực quan**: Tài khoản active hiển thị màu xanh lá và dấu tích `✓`, kèm đầy đủ 3 dòng thông tin: Quota, Gói đăng ký và Model.
-* **1-Click Language Switcher**: Submenu chọn nhanh 1 trong 10 ngôn ngữ giao diện ngay trên Menu Bar.
+* **Hero Card nổi bật**: Tài khoản active hiển thị dạng Card riêng biệt, tích hợp trực quan thanh tiến trình hạn mức 5h (kèm thời gian reset) và hạn mức tuần.
+* **1-Click Switching**: Đổi Model hoặc chuyển sang bất kỳ tài khoản dự phòng nào chỉ với 1 cú click (loại bỏ hoàn toàn ác mộng menu con đa tầng).
 
 ---
 
-### 6. Cửa sổ Cài đặt Chuyên nghiệp (Settings Window - `⌘,`)
+### 6. Cửa sổ Cài đặt Chuẩn macOS System Settings (Settings Window - `⌘,`)
 
-Giao diện cửa sổ native kích thước 660 x 580 px với 3 Tab riêng biệt:
+Giao diện cửa sổ native kích thước 760 x 560 px với bố cục **Split-View Sidebar** hiện đại chuẩn macOS Ventura, Sonoma và Sequoia:
+
+#### 📁 Cột Sidebar Trái (Navigation)
+* 👥 **Tài khoản (Accounts)**: Quản lý danh sách tài khoản, thêm mới, phân quyền model (kèm badge đếm số lượng tài khoản theo thời gian thực).
+* 🔄 **Xoay vòng (Rotation)**: Cấu hình ngưỡng cảnh báo và tần suất quét hạn mức.
+* ⚙️ **Hệ thống (System)**: Ngôn ngữ hiển thị (10 ngôn ngữ), Khởi động cùng máy tính, Thông báo & Âm thanh.
+* ℹ️ **Thông tin (About)**: Phiên bản, tác giả, giấy phép mã nguồn mở MIT và mã nguồn dự án.
+* **Service Status Indicator**: Đèn báo trạng thái kết nối Local Proxy `127.0.0.1:8045` luôn hiển thị trực quan ở góc dưới sidebar.
 
 #### 👥 Tab 1: Quản lý Tài khoản (Accounts)
-* **Bảng danh sách 4 cột chuyên nghiệp**:
-  1. *Tài khoản & Gói*: Email kèm icon trạng thái `🟢/⚪` và tag Gói cước (`Google AI Pro`).
-  2. *Model & Trạng thái*: Tên model AI (`Gemini 3.8 Flash`) + tag `● Đang hoạt động` hoặc `○ Dự phòng (Standby)`.
-  3. *Hạn mức 5 giờ*: Số % còn lại hiển thị phông số monospaced, tự động đổi màu xanh / vàng / đỏ.
-  4. *Hạn mức tuần*: Tỷ lệ quota còn lại trong chu kỳ 7 ngày.
-* **Thao tác nhanh**:
-  * Double-click chuột vào bất kỳ dòng nào trong bảng để kích hoạt tài khoản đó ngay lập tức.
-  * **Kích hoạt tài khoản này (Set Active)**: Chuyển tài khoản được chọn thành active.
-  * **Xoá tài khoản (Delete Account)**: Xoá tài khoản phụ khỏi danh sách xoay vòng (có hộp thoại xác nhận bảo vệ, tự động ngăn xoá tài khoản đang active).
-  * **Đăng nhập Google OAuth (Browser)**: Mở trình duyệt web để đăng nhập Google OAuth thông qua Local Callback Server ngẫu nhiên, tự động lưu token an toàn.
+* **Thẻ Tài khoản Hiện đại (Account Cards)**:
+  * Mỗi tài khoản được hiển thị dạng Card bo góc sang trọng, phân biệt rõ tài khoản `● Đang hoạt động` và `○ Dự phòng`.
+  * Hiển thị thanh tiến trình hạn mức 5 giờ (kèm số % `SF Mono` đổi màu theo ngưỡng an toàn/cảnh báo/nguy hiểm) và hạn mức tuần.
+  * Tag gói dịch vụ nhận diện thực tế (`Google AI Pro`, `Google AI Ultra`, `Free`).
+  * Dropdown chọn nhanh Model AI ưu tiên trực tiếp trên thẻ.
+  * Nút thao tác nhanh trên từng thẻ: **Kích hoạt ngay**, **Sửa tên gợi nhớ (Alias)**, **Xoá tài khoản**.
+* **Thêm tài khoản 1-Click (+ MenuButton)**:
+  * **Đăng nhập Google OAuth (Browser)**: Mở trình duyệt web để đăng nhập Google OAuth an toàn.
   * **Import từ Antigravity IDE**: Quét và tự động nạp tài khoản đang đăng nhập trong `~/.gemini`.
   * **Import tệp JSON**: Nạp danh sách tài khoản từ file cấu hình bên ngoài.
-  * **Cập nhật Quota**: Nút làm mới dữ liệu thủ công ngay trên đầu bảng.
+* **Cập nhật Quota**: Nút làm mới dữ liệu thủ công ngay trên thanh công cụ.
 
 #### 🔄 Tab 2: Xoay vòng (Rotation)
-* **Tự động xoay vòng tài khoản**: Bật/tắt tính năng xoay vòng thông minh khi chạm ngưỡng.
-* **Ngưỡng kích hoạt xoay vòng**: Tuỳ chọn mức hạn mức cảnh báo (`5%`, `10% - Mặc định`, `15%`, `20%`, `25%`).
-* **Tần suất quét Quota**: Tuỳ chọn chu kỳ làm mới dữ liệu tự động (`30 giây - Mặc định`, `60 giây (1 phút)`, `2 phút`, `5 phút`).
+* **Tự động xoay vòng tài khoản**: Công tắc Native Switch bật/tắt tính năng xoay vòng thông minh khi chạm ngưỡng.
+* **Ngưỡng kích hoạt xoay vòng**: Dải nút chọn nhanh mức hạn mức cảnh báo (`5%`, `10% - Khuyên dùng`, `15%`, `20%`, `25%`).
+* **Tần suất quét Quota**: Tùy chọn chu kỳ làm mới dữ liệu tự động (`30 giây`, `60 giây (Mặc định)`, `2 phút`, `5 phút`).
 
 #### ⚙️ Tab 3: Hệ thống (System)
 * **Ngôn ngữ hiển thị**: Danh sách 10 ngôn ngữ giao diện (có quốc kỳ đại diện).
-* **Khởi động cùng máy tính (Launch at Login)**: Tự động chạy ngầm khi bật máy Mac. Sử dụng `SMAppService` hiện đại trên macOS 13+ (Ventura, Sonoma, Sequoia) và AppleScript Fallback trên macOS 12, tự động dọn sạch các file plist LaunchAgent cũ.
-* **Thông báo hệ thống (Notifications)**: Gửi thông báo Notification Center khi xoay vòng thành công hoặc khi chuyển tài khoản thủ công.
-* **Âm thanh thông báo**: Tuỳ chọn phát âm thanh "Glass" êm dịu khi xoay vòng.
-* **Phím tắt khởi động nhanh**: Nút mở nhanh **Antigravity App** và **Antigravity IDE**.
+* **Khởi động cùng máy tính (Launch at Login)**: Công tắc Native Switch tự động chạy ngầm khi bật máy Mac qua `SMAppService`.
+* **Thông báo hệ thống (Notifications)**: Gửi thông báo Notification Center khi xoay vòng thành công.
+* **Âm thanh thông báo**: Tùy chọn phát âm thanh khi xoay vòng.
+* **Phím tắt khởi động nhanh**: Nút mở nhanh **Antigravity Desktop App** và **Antigravity IDE**.
 
 ---
 
