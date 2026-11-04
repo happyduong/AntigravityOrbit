@@ -81,7 +81,7 @@ public class StatusBarController: NSObject, NSPopoverDelegate {
         let rootView = OrbitPopoverView(viewModel: viewModel)
         popoverHostingController = NSHostingController(rootView: rootView)
         popover.contentViewController = popoverHostingController
-        popover.contentSize = NSSize(width: 340, height: 460)
+        updatePopoverSize()
     }
 
     private func setupStatusItem() {
@@ -120,11 +120,29 @@ public class StatusBarController: NSObject, NSPopoverDelegate {
         }
     }
 
+    private func updatePopoverSize() {
+        guard let hosting = popoverHostingController else { return }
+        hosting.view.layoutSubtreeIfNeeded()
+        let fitting = hosting.view.fittingSize
+        if fitting.width > 0 && fitting.height > 0 {
+            popover.contentSize = fitting
+        }
+    }
+
     private func showPopover(_ sender: NSStatusBarButton) {
         updateViewModelState()
+        updatePopoverSize()
         popover.contentViewController = popoverHostingController
         popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .minY)
         if let window = popover.contentViewController?.view.window {
+            if let screen = window.screen ?? NSScreen.main {
+                let maxAllowedY = screen.visibleFrame.maxY
+                if window.frame.maxY > maxAllowedY {
+                    var frame = window.frame
+                    frame.origin.y -= (window.frame.maxY - maxAllowedY)
+                    window.setFrame(frame, display: true)
+                }
+            }
             window.makeKey()
         }
         NSApp.activate(ignoringOtherApps: true)
@@ -170,6 +188,9 @@ public class StatusBarController: NSObject, NSPopoverDelegate {
             autoRotate: ConfigManager.shared.config.autoRotateEnabled,
             threshold: ConfigManager.shared.config.thresholdPercentage
         )
+        if popover != nil && popover.isShown {
+            updatePopoverSize()
+        }
     }
 
     private func updateStatusBarDisplay() {

@@ -651,9 +651,20 @@ private struct StandbyAccountsSection: View {
             }
             .padding(.horizontal, 2)
 
-            VStack(spacing: 4) {
-                ForEach(viewModel.standbyAccounts, id: \.id) { acc in
-                    StandbyAccountRow(account: acc, viewModel: viewModel)
+            if viewModel.standbyAccounts.count > 3 {
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 4) {
+                        ForEach(viewModel.standbyAccounts, id: \.id) { acc in
+                            StandbyAccountRow(account: acc, viewModel: viewModel)
+                        }
+                    }
+                }
+                .frame(maxHeight: 165)
+            } else {
+                VStack(spacing: 4) {
+                    ForEach(viewModel.standbyAccounts, id: \.id) { acc in
+                        StandbyAccountRow(account: acc, viewModel: viewModel)
+                    }
                 }
             }
         }
