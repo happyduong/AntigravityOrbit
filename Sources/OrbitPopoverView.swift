@@ -399,25 +399,19 @@ private struct StreamlinedHeader: View {
                     size: 22
                 )
 
-                VStack(alignment: .leading, spacing: 0.5) {
-                    HStack(spacing: 5) {
-                        Text(active.displayName(showAlias: viewModel.showAccountAlias))
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(active.displayName(showAlias: viewModel.showAccountAlias))
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
 
-                        Text(active.displayTierName)
-                            .font(.system(size: 9, weight: .semibold))
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(Color.purple.opacity(0.18))
-                            .foregroundColor(.purple)
-                            .cornerRadius(4)
-                    }
-
-                    Text(active.email)
-                        .font(.system(size: 9.5))
+                    Text(active.displayTierName)
+                        .font(.system(size: 9, weight: .semibold))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(Color.secondary.opacity(0.18))
                         .foregroundColor(.secondary)
+                        .cornerRadius(4)
                         .lineLimit(1)
                 }
             } else {
@@ -1142,8 +1136,8 @@ private struct RadialHeroGauge: View {
                         .font(.system(size: 9, weight: .semibold))
                         .padding(.horizontal, 4)
                         .padding(.vertical, 0.5)
-                        .background(Color.purple.opacity(0.18))
-                        .foregroundColor(.purple)
+                        .background(Color.secondary.opacity(0.18))
+                        .foregroundColor(.secondary)
                         .cornerRadius(3)
 
                     if let wk = account.geminiWeeklyPercentage {
