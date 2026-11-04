@@ -631,12 +631,6 @@ private struct StreamlinedStandbyRow: View {
             Text("\(pct)%")
                 .font(.system(size: 10.5, weight: .bold, design: .monospaced))
                 .foregroundColor(PopoverUIHelper.quotaColor(pct, threshold: viewModel.thresholdPercentage))
-
-            Image(systemName: "arrow.right.circle.fill")
-                .font(.system(size: 12))
-                .foregroundColor(.accentColor)
-                .opacity(isHovered ? 1.0 : 0)
-                .frame(width: 14)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4.5)
@@ -678,20 +672,6 @@ private struct StreamlinedControlBar: View {
 
     var body: some View {
         HStack {
-            // Auto Rotate Toggle
-            Toggle(isOn: Binding(
-                get: { viewModel.autoRotateEnabled },
-                set: { _ in viewModel.onToggleAutoRotate?() }
-            )) {
-                Text(String(format: L10n.tr("popover.auto_rotate_short"), viewModel.thresholdPercentage))
-                    .font(.system(size: 10.5, weight: .medium))
-                    .foregroundColor(.secondary)
-            }
-            .toggleStyle(SwitchToggleStyle())
-            .scaleEffect(0.72)
-
-            Spacer()
-
             // Quick Rotate Button
             Button(action: {
                 viewModel.onRotateNow?()
@@ -714,6 +694,20 @@ private struct StreamlinedControlBar: View {
             .onHover { hovering in
                 viewModel.isRotateHovered = hovering
             }
+
+            Spacer()
+
+            // Auto Rotate Toggle
+            Toggle(isOn: Binding(
+                get: { viewModel.autoRotateEnabled },
+                set: { _ in viewModel.onToggleAutoRotate?() }
+            )) {
+                Text(String(format: L10n.tr("popover.auto_rotate_short"), viewModel.thresholdPercentage))
+                    .font(.system(size: 10.5, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
+            .toggleStyle(SwitchToggleStyle())
+            .scaleEffect(0.72, anchor: .trailing)
         }
         .padding(.top, 2)
         .padding(.horizontal, 2)
