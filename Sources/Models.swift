@@ -176,9 +176,7 @@ public struct AIModelCatalog {
     public static let geminiModels: [AIModelOption] = [
         AIModelOption(id: "MODEL_PLACEHOLDER_M318", displayName: "Gemini 3.8 Flash (High)", group: "Google Gemini"),
         AIModelOption(id: "MODEL_PLACEHOLDER_M319", displayName: "Gemini 3.8 Flash (Medium)", group: "Google Gemini"),
-        AIModelOption(id: "MODEL_PLACEHOLDER_M320", displayName: "Gemini 3.8 Flash (Low)", group: "Google Gemini"),
-        AIModelOption(id: "gemini-3-pro-high", displayName: "Gemini 3 Pro (High)", group: "Google Gemini"),
-        AIModelOption(id: "MODEL_PLACEHOLDER_M198", displayName: "Gemini 3.5 Flash Lite", group: "Google Gemini")
+        AIModelOption(id: "MODEL_PLACEHOLDER_M320", displayName: "Gemini 3.8 Flash (Low)", group: "Google Gemini")
     ]
 
     public static let claudeModels: [AIModelOption] = [

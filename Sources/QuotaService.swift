@@ -246,14 +246,10 @@ public class QuotaService {
             return "GPT-OSS 120B (Medium)"
         case "MODEL_PLACEHOLDER_M50", "gemini-3.1-flash-lite":
             return "Gemini 3.1 Flash Lite"
-        case "MODEL_PLACEHOLDER_M198", "gemini-3.5-flash-lite":
-            return "Gemini 3.5 Flash Lite"
         case "MODEL_PLACEHOLDER_M21", "gemini-3.1-flash-image":
             return "Gemini 3.1 Flash Image"
         case "MODEL_TIER_FLASH", "gemini-3-flash":
             return "Gemini 3 Flash"
-        case "gemini-3-pro-high":
-            return "Gemini 3 Pro (High)"
         case "claude-opus-5-5-high":
             return "Claude Opus 5.5 (High)"
         case "claude-opus-5-5-medium":

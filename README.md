@@ -20,7 +20,7 @@
 
 **Antigravity Orbit** là dự án mã nguồn mở (Open Source) native 100% bằng **Swift & AppKit** dành cho hệ điều hành macOS, hoạt động trực tiếp và tinh gọn trên thanh trạng thái (Menu Bar). 
 
-Ứng dụng được sinh ra nhằm giải quyết triệt để vấn đề gián đoạn công việc khi lập trình viên sử dụng các mô hình Google AI (Gemini 3.8 Flash, Gemini 3 Pro, Claude Sonnet/Opus 4.6, GPT-OSS 120B...) trên **Antigravity IDE**, **agy CLI** và **Antigravity Desktop App**.
+Ứng dụng được sinh ra nhằm giải quyết triệt để vấn đề gián đoạn công việc khi lập trình viên sử dụng các mô hình Google AI (Gemini 3.8 Flash, Claude Sonnet/Opus 4.6, GPT-OSS 120B...) trên **Antigravity IDE**, **agy CLI** và **Antigravity Desktop App**.
 
 Thay vì phải theo dõi hạn mức thủ công hay bất ngờ bị chặn request khi cạn token/quota, **Antigravity Orbit** liên tục cập nhật hạn mức thực tế, tự động kích hoạt cơ chế **xoay vòng thông minh (Smart Round-Robin Orbit)** sang tài khoản dự phòng có quota tốt nhất, đồng thời đồng bộ tức thời 3 chiều để luồng làm việc của bạn luôn trơn tru và liên tục 24/7.
 
@@ -76,8 +76,7 @@ Thay vì phải theo dõi hạn mức thủ công hay bất ngờ bị chặn re
   * Đọc trực tiếp cấu hình IDE từ file `~/.gemini/antigravity/antigravity_state.pbtxt`.
   * Chuẩn hoá tên hiển thị các model mới nhất:
     * `Gemini 3.8 Flash (High / Medium / Low / Tiered)`
-    * `Gemini 3 Pro (High)`
-    * `Gemini 3.5 Flash Lite` / `Gemini 3.1 Flash Lite`
+    * `Gemini 3.1 Flash Lite`
     * `Claude Opus 4.6 (Thinking)` / `Claude Sonnet 4.6 (Thinking)`
     * `Claude Opus 5.5 (High / Medium)`
     * `GPT-OSS 120B (Medium)`

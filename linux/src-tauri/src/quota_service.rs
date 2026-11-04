@@ -397,9 +397,7 @@ impl QuotaService {
             "MODEL_PLACEHOLDER_M35" | "claude-sonnet-4-6" => "Claude Sonnet 4.6 (Thinking)".to_string(),
             "MODEL_OPENAI_GPT_OSS_120B_MEDIUM" | "gpt-oss-120b-medium" => "GPT-OSS 120B (Medium)".to_string(),
             "MODEL_PLACEHOLDER_M50" | "gemini-3.1-flash-lite" => "Gemini 3.1 Flash Lite".to_string(),
-            "MODEL_PLACEHOLDER_M198" | "gemini-3.5-flash-lite" => "Gemini 3.5 Flash Lite".to_string(),
             "MODEL_PLACEHOLDER_M21" | "gemini-3.1-flash-image" => "Gemini 3.1 Flash Image".to_string(),
-            "gemini-3-pro-high" => "Gemini 3 Pro (High)".to_string(),
             "claude-opus-5-5-high" => "Claude Opus 5.5 (High)".to_string(),
             "claude-opus-5-5-medium" => "Claude Opus 5.5 (Medium)".to_string(),
             _ => {
