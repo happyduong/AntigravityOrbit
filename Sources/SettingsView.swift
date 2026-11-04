@@ -428,8 +428,8 @@ private struct SettingsAccountCard: View {
                             .font(.system(size: 9.5, weight: .semibold))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 1)
-                            .background(Color.purple.opacity(0.18))
-                            .foregroundColor(.purple)
+                            .background(Color.secondary.opacity(0.18))
+                            .foregroundColor(.secondary)
                             .cornerRadius(6)
                     }
 

@@ -445,7 +445,7 @@ public class LocalizationManager {
             "layout.radial": "Đồng hồ tròn (Mini Widget)",
             "layout.radial_desc": "Mặt đo hình tròn siêu gọn lấy cảm hứng từ Apple Watch.",
             "popover.active_badge": "ĐANG DÙNG",
-            "popover.reset_in": "Đổi sau %@",
+            "popover.reset_in": "Reset sau %@",
             "popover.next_candidate": "Tài khoản kế tiếp",
             "popover.auto_rotate_short": "Tự xoay vòng (<%d%%)",
             "popover.rotate_now_short": "Xoay ngay",
