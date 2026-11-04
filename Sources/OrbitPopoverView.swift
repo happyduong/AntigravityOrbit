@@ -799,36 +799,17 @@ private struct FooterBar: View {
     var body: some View {
         HStack {
             // Quick Language Menu
-            Menu {
+            Picker("", selection: Binding(
+                get: { viewModel.currentLanguage },
+                set: { lang in viewModel.onSelectLanguage?(lang) }
+            )) {
                 ForEach(AppLanguage.allCases, id: \.self) { lang in
-                    Button(action: {
-                        viewModel.onSelectLanguage?(lang)
-                    }) {
-                        HStack {
-                            Text("\(lang.flag)  \(lang.displayName)")
-                            if lang == viewModel.currentLanguage {
-                                Text("✓")
-                            }
-                        }
-                    }
+                    Text("\(lang.flag)  \(lang.displayName)").tag(lang)
                 }
-            } label: {
-                HStack(spacing: 4) {
-                    Text("\(viewModel.currentLanguage.flag) \(viewModel.currentLanguage.displayName)")
-                        .font(.system(size: 10.5, weight: .medium))
-                        .foregroundColor(.secondary)
-
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 7, weight: .bold))
-                        .foregroundColor(.secondary.opacity(0.7))
-                }
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
-                .background(Color.secondary.opacity(0.08))
-                .cornerRadius(5)
             }
-            .menuStyle(BorderlessButtonMenuStyle())
-            .menuIndicator(.hidden)
+            .pickerStyle(MenuPickerStyle())
+            .labelsHidden()
+            .controlSize(.small)
 
             Spacer()
 
