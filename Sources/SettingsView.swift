@@ -78,6 +78,12 @@ public class SettingsViewModel: ObservableObject {
             name: .languageDidChange,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAvatarChanged),
+            name: .avatarDidChange,
+            object: nil
+        )
     }
 
     @objc private func handleLanguageChanged() {
@@ -85,6 +91,12 @@ public class SettingsViewModel: ObservableObject {
             guard let self = self else { return }
             self.currentLanguage = LocalizationManager.shared.currentLanguage
             self.objectWillChange.send()
+        }
+    }
+
+    @objc private func handleAvatarChanged() {
+        DispatchQueue.main.async { [weak self] in
+            self?.objectWillChange.send()
         }
     }
 
@@ -380,22 +392,13 @@ private struct SettingsAccountCard: View {
         VStack(spacing: 8) {
             // Top Row: Avatar, Name, Email, Status Pill & Tier
             HStack(spacing: 9) {
-                // Initial Avatar
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: account.isCurrent ? [Color.blue, Color.indigo] : [Color.gray.opacity(0.6), Color.gray.opacity(0.8)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 26, height: 26)
-
-                    Text(avatarLetter)
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.white)
-                }
+                AccountAvatarView(
+                    accountId: account.id,
+                    pictureUrl: account.picture,
+                    displayName: account.displayName(showAlias: viewModel.showAccountAlias),
+                    isCurrent: account.isCurrent,
+                    size: 26
+                )
 
                 VStack(alignment: .leading, spacing: 1) {
                     HStack(spacing: 6) {
@@ -455,7 +458,7 @@ private struct SettingsAccountCard: View {
                             .font(.system(size: 11, weight: .bold, design: .monospaced))
                             .foregroundColor(quotaColor(pct5h))
                     }
-                    CapsuleProgressBar(percentage: pct5h, height: 5, tintColor: quotaColor(pct5h))
+                    CapsuleProgressBar(percentage: pct5h, height: 6, tintColor: quotaColor(pct5h))
                 }
                 .padding(7)
                 .background(Color(NSColor.controlBackgroundColor).opacity(0.4))
@@ -469,10 +472,10 @@ private struct SettingsAccountCard: View {
                             .foregroundColor(.secondary)
                         Spacer()
                         Text("\(account.geminiWeeklyPercentage ?? 100)%")
-                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .foregroundColor(Color.blue)
                     }
-                    CapsuleProgressBar(percentage: account.geminiWeeklyPercentage ?? 100, height: 5, tintColor: Color.blue.opacity(0.7))
+                    CapsuleProgressBar(percentage: account.geminiWeeklyPercentage ?? 100, height: 6, tintColor: Color.blue.opacity(0.8))
                 }
                 .padding(7)
                 .background(Color(NSColor.controlBackgroundColor).opacity(0.4))
@@ -585,14 +588,6 @@ private struct SettingsAccountCard: View {
                 viewModel.hoveredAccountId = nil
             }
         }
-    }
-
-    private var avatarLetter: String {
-        let name = account.displayName(showAlias: viewModel.showAccountAlias)
-        if let first = name.first {
-            return String(first).uppercased()
-        }
-        return "A"
     }
 
     private var pct5h: Int {

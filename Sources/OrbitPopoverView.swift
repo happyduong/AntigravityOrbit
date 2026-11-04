@@ -1,6 +1,13 @@
 import SwiftUI
 import AppKit
 
+// MARK: - Toolbar Tooltip Enum
+public enum ToolbarTooltip: Equatable {
+    case refresh
+    case settings
+    case quit
+}
+
 // MARK: - View Model
 public class OrbitViewModel: ObservableObject {
     @Published public var accounts: [AccountStatus] = []
@@ -11,6 +18,8 @@ public class OrbitViewModel: ObservableObject {
     @Published public var currentLanguage: AppLanguage = LocalizationManager.shared.currentLanguage
     @Published public var spinDegree: Double = 0
     @Published public var hoveredAccountId: String? = nil
+    @Published public var isRotateHovered: Bool = false
+    @Published public var activeToolbarTooltip: ToolbarTooltip? = nil
 
     // Action Closures
     public var onRefresh: (() -> Void)?
@@ -32,11 +41,23 @@ public class OrbitViewModel: ObservableObject {
             name: .languageDidChange,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAvatarChanged),
+            name: .avatarDidChange,
+            object: nil
+        )
     }
 
     @objc private func handleLanguageChanged() {
         DispatchQueue.main.async { [weak self] in
             self?.currentLanguage = LocalizationManager.shared.currentLanguage
+            self?.objectWillChange.send()
+        }
+    }
+
+    @objc private func handleAvatarChanged() {
+        DispatchQueue.main.async { [weak self] in
             self?.objectWillChange.send()
         }
     }
@@ -62,6 +83,28 @@ public class OrbitViewModel: ObservableObject {
     public var standbyAccounts: [AccountStatus] {
         return accounts.filter { !$0.isCurrent }
     }
+
+    public var nextRotationAccount: AccountStatus? {
+        guard accounts.count > 1, let active = activeAccount else { return nil }
+        guard let currentIndex = accounts.firstIndex(where: { $0.id == active.id }) else { return nil }
+
+        let threshold = thresholdPercentage
+        // Try round-robin accounts with percentage > threshold
+        for offset in 1..<accounts.count {
+            let nextIndex = (currentIndex + offset) % accounts.count
+            let candidate = accounts[nextIndex]
+            let pct = candidate.gemini5hPercentage ?? candidate.remainingPercentage
+            if pct > threshold {
+                return candidate
+            }
+        }
+
+        // If all are <= threshold, pick the non-active account with highest percentage
+        let nonActive = accounts.filter { $0.id != active.id }
+        return nonActive.max(by: {
+            ($0.gemini5hPercentage ?? $0.remainingPercentage) < ($1.gemini5hPercentage ?? $1.remainingPercentage)
+        })
+    }
 }
 
 // MARK: - Main Popover View
@@ -76,6 +119,7 @@ public struct OrbitPopoverView: View {
         VStack(spacing: 12) {
             // 1. Header Toolbar
             HeaderToolbar(viewModel: viewModel)
+                .zIndex(100)
 
             Divider()
                 .opacity(0.5)
@@ -104,7 +148,7 @@ public struct OrbitPopoverView: View {
         }
         .padding(14)
         .frame(width: 340)
-        .background(VisualEffectBackground().ignoresSafeArea())
+        .background(VisualEffectBackground())
     }
 }
 
@@ -173,10 +217,25 @@ private struct HeaderToolbar: View {
                     .font(.system(size: 12, weight: .medium))
                     .rotationEffect(.degrees(viewModel.spinDegree))
                     .frame(width: 24, height: 24)
+                    .background(Color.secondary.opacity(viewModel.activeToolbarTooltip == .refresh ? 0.15 : 0))
+                    .cornerRadius(5)
                     .contentShape(Rectangle())
             }
             .buttonStyle(PlainButtonStyle())
-            .help(L10n.tr("menu.refresh_quota"))
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.12)) {
+                    viewModel.activeToolbarTooltip = hovering ? .refresh : nil
+                }
+            }
+            .overlay(
+                Group {
+                    if viewModel.activeToolbarTooltip == .refresh {
+                        ArrowTooltip(text: L10n.tr("menu.refresh_quota"))
+                            .offset(y: 28)
+                    }
+                },
+                alignment: .top
+            )
 
             // Settings Button
             Button(action: {
@@ -185,10 +244,25 @@ private struct HeaderToolbar: View {
                 Image(systemName: "gearshape")
                     .font(.system(size: 12, weight: .medium))
                     .frame(width: 24, height: 24)
+                    .background(Color.secondary.opacity(viewModel.activeToolbarTooltip == .settings ? 0.15 : 0))
+                    .cornerRadius(5)
                     .contentShape(Rectangle())
             }
             .buttonStyle(PlainButtonStyle())
-            .help(L10n.tr("menu.settings"))
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.12)) {
+                    viewModel.activeToolbarTooltip = hovering ? .settings : nil
+                }
+            }
+            .overlay(
+                Group {
+                    if viewModel.activeToolbarTooltip == .settings {
+                        ArrowTooltip(text: L10n.tr("menu.settings"))
+                            .offset(y: 28)
+                    }
+                },
+                alignment: .top
+            )
 
             // Quit Button
             Button(action: {
@@ -197,10 +271,25 @@ private struct HeaderToolbar: View {
                 Image(systemName: "xmark.circle")
                     .font(.system(size: 12, weight: .medium))
                     .frame(width: 24, height: 24)
+                    .background(Color.secondary.opacity(viewModel.activeToolbarTooltip == .quit ? 0.15 : 0))
+                    .cornerRadius(5)
                     .contentShape(Rectangle())
             }
             .buttonStyle(PlainButtonStyle())
-            .help(L10n.tr("menu.quit"))
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.12)) {
+                    viewModel.activeToolbarTooltip = hovering ? .quit : nil
+                }
+            }
+            .overlay(
+                Group {
+                    if viewModel.activeToolbarTooltip == .quit {
+                        ArrowTooltip(text: L10n.tr("menu.quit"), arrowOffsetX: 6)
+                            .offset(x: -6, y: 28)
+                    }
+                },
+                alignment: .top
+            )
         }
     }
 
@@ -225,6 +314,39 @@ private struct HeaderToolbar: View {
             return img
         }
         return nil
+    }
+}
+
+// MARK: - Arrow Tooltip View
+private struct ArrowTooltip: View {
+    let text: String
+    var arrowOffsetX: CGFloat = 0
+
+    var body: some View {
+        VStack(spacing: -1) {
+            Image(systemName: "triangle.fill")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 8, height: 4.5)
+                .foregroundColor(Color(NSColor.controlBackgroundColor))
+                .offset(x: arrowOffsetX)
+
+            Text(text)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.primary)
+                .lineLimit(1)
+                .fixedSize()
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3.5)
+                .background(Color(NSColor.controlBackgroundColor))
+                .cornerRadius(5)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 5)
+                        .stroke(Color.secondary.opacity(0.25), lineWidth: 0.5)
+                )
+        }
+        .shadow(color: Color.black.opacity(0.22), radius: 3, x: 0, y: 1.5)
+        .allowsHitTesting(false)
     }
 }
 
@@ -264,22 +386,13 @@ private struct ActiveAccountHeroCard: View {
 
             // Row 2: Avatar & Account Names
             HStack(spacing: 8) {
-                // Avatar with initial letter
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue, Color.indigo],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 28, height: 28)
-
-                    Text(avatarLetter)
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
-                }
+                AccountAvatarView(
+                    accountId: account.id,
+                    pictureUrl: account.picture,
+                    displayName: account.displayName(showAlias: viewModel.showAccountAlias),
+                    isCurrent: true,
+                    size: 28
+                )
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(account.displayName(showAlias: viewModel.showAccountAlias))
@@ -316,12 +429,12 @@ private struct ActiveAccountHeroCard: View {
                         }
 
                         Text("\(pct5h)%")
-                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                            .font(.system(size: 11.5, weight: .bold, design: .monospaced))
                             .foregroundColor(quotaColor(pct5h))
                     }
 
                     // Progress Bar 5h
-                    QuotaProgressBar(percentage: pct5h, height: 7, tintColor: quotaColor(pct5h))
+                    QuotaProgressBar(percentage: pct5h, height: 6, tintColor: quotaColor(pct5h))
                 }
 
                 // Weekly Limit (if available)
@@ -329,17 +442,23 @@ private struct ActiveAccountHeroCard: View {
                     VStack(spacing: 3) {
                         HStack {
                             Text(L10n.tr("popover.weekly_limit"))
-                                .font(.system(size: 10.5))
-                                .foregroundColor(.secondary)
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.primary)
 
                             Spacer()
 
+                            if let countdown = formatCountdown(account.geminiWeeklyResetTime) {
+                                Text("(Reset: \(countdown))")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary)
+                            }
+
                             Text("\(weekly)%")
-                                .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                                .foregroundColor(.secondary)
+                                .font(.system(size: 11.5, weight: .bold, design: .monospaced))
+                                .foregroundColor(Color.blue)
                         }
 
-                        QuotaProgressBar(percentage: weekly, height: 5, tintColor: Color.blue.opacity(0.8))
+                        QuotaProgressBar(percentage: weekly, height: 6, tintColor: Color.blue.opacity(0.85))
                     }
                 }
             }
@@ -444,14 +563,6 @@ private struct ActiveAccountHeroCard: View {
         )
     }
 
-    private var avatarLetter: String {
-        let name = account.displayName(showAlias: viewModel.showAccountAlias)
-        if let first = name.first {
-            return String(first).uppercased()
-        }
-        return "A"
-    }
-
     private var pct5h: Int {
         return account.gemini5hPercentage ?? account.remainingPercentage
     }
@@ -475,9 +586,12 @@ private struct ActiveAccountHeroCard: View {
         guard let target = date else { return nil }
         let diff = target.timeIntervalSinceNow
         if diff <= 0 { return "0m" }
-        let hours = Int(diff) / 3600
+        let days = Int(diff) / 86400
+        let hours = (Int(diff) % 86400) / 3600
         let minutes = (Int(diff) % 3600) / 60
-        if hours > 0 {
+        if days > 0 {
+            return "\(days)d \(hours)h"
+        } else if hours > 0 {
             return "\(hours)h \(minutes)m"
         } else {
             return "\(minutes)m"
@@ -556,10 +670,18 @@ private struct StandbyAccountRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 7) {
             // Status Dot
             Text(statusDot)
                 .font(.system(size: 8))
+
+            AccountAvatarView(
+                accountId: account.id,
+                pictureUrl: account.picture,
+                displayName: account.displayName(showAlias: viewModel.showAccountAlias),
+                isCurrent: false,
+                size: 18
+            )
 
             // Info
             VStack(alignment: .leading, spacing: 1) {
@@ -643,16 +765,23 @@ private struct ControlsSection: View {
     @ObservedObject var viewModel: OrbitViewModel
 
     var body: some View {
-        VStack(spacing: 8) {
-            // Auto Rotate Toggle
-            HStack {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+        VStack(spacing: 0) {
+            // Upper Row: Auto-Rotate Switch
+            HStack(spacing: 8) {
+                Image(systemName: "bolt.badge.automatic")
+                    .font(.system(size: 12.5, weight: .medium))
+                    .foregroundColor(viewModel.autoRotateEnabled ? .accentColor : .secondary)
+                    .frame(width: 18)
 
-                Text(L10n.tr("settings.auto_rotate_title"))
-                    .font(.system(size: 11))
-                    .foregroundColor(.primary)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(L10n.tr("popover.auto_rotate_title"))
+                        .font(.system(size: 11.5, weight: .medium))
+                        .foregroundColor(.primary)
+
+                    Text(L10n.tr("popover.auto_rotate_condition", viewModel.thresholdPercentage))
+                        .font(.system(size: 9.5))
+                        .foregroundColor(.secondary)
+                }
 
                 Spacer()
 
@@ -661,47 +790,76 @@ private struct ControlsSection: View {
                     set: { _ in viewModel.onToggleAutoRotate?() }
                 ))
                 .toggleStyle(SwitchToggleStyle())
-                .scaleEffect(0.75)
+                .scaleEffect(0.72)
                 .labelsHidden()
             }
-            .padding(.horizontal, 2)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
 
-            // Primary Action Button: Rotate Now (⌘R)
+            Divider()
+                .opacity(0.35)
+
+            // Lower Row: Manual Rotate Button
             Button(action: {
                 viewModel.onRotateNow?()
             }) {
-                HStack {
+                HStack(spacing: 8) {
                     Image(systemName: "arrow.triangle.2.circlepath")
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .frame(width: 18)
 
-                    Text(L10n.tr("menu.rotate_now"))
-                        .font(.system(size: 11.5, weight: .semibold))
+                    VStack(alignment: .leading, spacing: 1.5) {
+                        Text(L10n.tr("menu.rotate_now"))
+                            .font(.system(size: 11.5, weight: .medium))
+                            .foregroundColor(.primary)
+
+                        HStack(spacing: 4) {
+                            Text("↳")
+                                .font(.system(size: 9.5, weight: .bold))
+                                .foregroundColor(.secondary)
+
+                            if let next = viewModel.nextRotationAccount {
+                                let pct = next.gemini5hPercentage ?? next.remainingPercentage
+                                Text(L10n.tr("popover.next_preview", next.displayName(showAlias: viewModel.showAccountAlias), pct))
+                                    .font(.system(size: 9.5))
+                                    .foregroundColor(pct > viewModel.thresholdPercentage ? .green : .orange)
+                                    .lineLimit(1)
+                            } else {
+                                Text(L10n.tr("popover.no_standby_account"))
+                                    .font(.system(size: 9.5))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
 
                     Spacer()
 
                     Text("⌘R")
-                        .font(.system(size: 9.5, weight: .bold, design: .monospaced))
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 1)
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(3)
+                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1.5)
+                        .background(Color.secondary.opacity(0.12))
+                        .cornerRadius(3.5)
                 }
-                .foregroundColor(.white)
                 .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    LinearGradient(
-                        colors: [Color.blue, Color.indigo],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .cornerRadius(7)
-                .shadow(color: Color.blue.opacity(0.3), radius: 3, x: 0, y: 1)
+                .padding(.vertical, 7)
+                .background(Color.secondary.opacity(viewModel.isRotateHovered ? 0.14 : 0.04))
+                .contentShape(Rectangle())
             }
             .buttonStyle(PlainButtonStyle())
+            .onHover { hovering in
+                viewModel.isRotateHovered = hovering
+            }
             .keyboardShortcut("r", modifiers: .command)
         }
+        .background(Color(NSColor.textBackgroundColor).opacity(0.35))
+        .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(NSColor.separatorColor).opacity(0.45), lineWidth: 0.5)
+        )
         .padding(.top, 2)
     }
 }

@@ -81,22 +81,34 @@ public class QuotaService {
                 var geminiWeekly: Int?
                 var other5h: Int?
                 var otherWeekly: Int?
-                var resetTime: String?
+                var gemini5hResetTime: String?
+                var geminiWeeklyResetTime: String?
 
                 if let models = acc.quota?.models {
                     for m in models {
-                        if m.name.contains("gemini") {
+                        let lower = m.name.lowercased()
+                        if lower.contains("gemini") {
                             minPercent = min(minPercent, m.percentage)
-                            if m.name.contains("flash") {
+                            if lower.contains("flash") || lower.contains("5h") {
                                 gemini5h = m.percentage
-                            }
-                            if m.name.contains("pro") || geminiWeekly == nil {
+                                if gemini5hResetTime == nil {
+                                    gemini5hResetTime = m.reset_time
+                                }
+                            } else if lower.contains("pro") || lower.contains("week") {
                                 geminiWeekly = m.percentage
+                                if geminiWeeklyResetTime == nil {
+                                    geminiWeeklyResetTime = m.reset_time
+                                }
+                            } else {
+                                if gemini5h == nil {
+                                    gemini5h = m.percentage
+                                    gemini5hResetTime = m.reset_time
+                                } else if geminiWeekly == nil {
+                                    geminiWeekly = m.percentage
+                                    geminiWeeklyResetTime = m.reset_time
+                                }
                             }
-                            if resetTime == nil {
-                                resetTime = m.reset_time
-                            }
-                        } else if m.name.contains("claude") || m.name.contains("gpt") {
+                        } else if lower.contains("claude") || lower.contains("gpt") {
                             other5h = m.percentage
                             otherWeekly = m.percentage
                         }
@@ -116,6 +128,20 @@ public class QuotaService {
                     resolvedName = acc.name ?? acc.email
                 }
                 let prefModel = accountsFile.accounts.first(where: { $0.id == acc.id })?.active_model ?? accountsFile.accounts.first(where: { $0.id == acc.id })?.model
+
+                let matchedAcc = accountsFile.accounts.first(where: { $0.id == acc.id || $0.email.lowercased() == acc.email.lowercased() })
+                var accountPic = matchedAcc?.picture
+                if accountPic == nil {
+                    let detailPath = self.getAccountDetailPath(accountId: acc.id)
+                    if let detailData = try? Data(contentsOf: detailPath),
+                       let detailJson = (try? JSONSerialization.jsonObject(with: detailData)) as? [String: Any] {
+                        accountPic = detailJson["picture"] as? String
+                    }
+                }
+                if let p = accountPic {
+                    _ = AvatarManager.shared.getAvatarImage(accountId: acc.id, pictureUrl: p)
+                }
+
                 let status = AccountStatus(
                     id: acc.id,
                     email: acc.email,
@@ -124,14 +150,16 @@ public class QuotaService {
                     remainingPercentage: primaryPercent,
                     gemini5hPercentage: gemini5h,
                     geminiWeeklyPercentage: geminiWeekly,
-                    geminiResetTime: resetTime,
+                    geminiResetTime: gemini5hResetTime,
+                    geminiWeeklyResetTime: geminiWeeklyResetTime,
                     other5hPercentage: other5h,
                     otherWeeklyPercentage: otherWeekly,
                     lastUpdated: Date(),
                     activeModel: currentModel,
                     subscriptionTier: tierDisplayName,
                     tierId: localTier,
-                    preferredModelId: prefModel
+                    preferredModelId: prefModel,
+                    picture: accountPic
                 )
                 results.append(status)
             }
@@ -417,19 +445,32 @@ public class QuotaService {
         let cachedTier = getCachedTierForAccount(acc: acc)
 
         var detailToken: AccountToken? = nil
+        var accountPicture = acc.picture
+
         if let detailData = try? Data(contentsOf: detailPath) {
             if let detail = try? JSONDecoder().decode(AccountDetailFile.self, from: detailData) {
                 detailToken = detail.token
-            } else if let dict = (try? JSONSerialization.jsonObject(with: detailData)) as? [String: Any],
-                      let tokenDict = dict["token"] as? [String: Any] {
-                detailToken = AccountToken(
-                    access_token: tokenDict["access_token"] as? String,
-                    refresh_token: tokenDict["refresh_token"] as? String,
-                    expires_in: tokenDict["expires_in"] as? Int,
-                    expiry_timestamp: tokenDict["expiry_timestamp"] as? Int,
-                    email: tokenDict["email"] as? String
-                )
+                if accountPicture == nil {
+                    accountPicture = detail.picture
+                }
+            } else if let dict = (try? JSONSerialization.jsonObject(with: detailData)) as? [String: Any] {
+                if let tokenDict = dict["token"] as? [String: Any] {
+                    detailToken = AccountToken(
+                        access_token: tokenDict["access_token"] as? String,
+                        refresh_token: tokenDict["refresh_token"] as? String,
+                        expires_in: tokenDict["expires_in"] as? Int,
+                        expiry_timestamp: tokenDict["expiry_timestamp"] as? Int,
+                        email: tokenDict["email"] as? String
+                    )
+                }
+                if accountPicture == nil {
+                    accountPicture = dict["picture"] as? String
+                }
             }
+        }
+
+        if let pic = accountPicture {
+            _ = AvatarManager.shared.getAvatarImage(accountId: acc.id, pictureUrl: pic)
         }
 
         guard let token = detailToken else {
@@ -441,7 +482,8 @@ public class QuotaService {
                 remainingPercentage: -1,
                 activeModel: modelName,
                 subscriptionTier: cachedTier,
-                preferredModelId: acc.active_model ?? acc.model
+                preferredModelId: acc.active_model ?? acc.model,
+                picture: accountPicture
             ))
             return
         }
@@ -465,14 +507,15 @@ public class QuotaService {
                         remainingPercentage: -1,
                         activeModel: modelName,
                         subscriptionTier: cachedTier,
-                        preferredModelId: acc.active_model ?? acc.model
+                        preferredModelId: acc.active_model ?? acc.model,
+                        picture: accountPicture
                     ))
                     return
                 }
-                self.executeQuotaQuery(acc: acc, activeId: activeId, token: newToken, refreshToken: refreshToken, canRetry: false, completion: completion)
+                self.executeQuotaQuery(acc: acc, activeId: activeId, token: newToken, refreshToken: refreshToken, picture: accountPicture, canRetry: false, completion: completion)
             }
         } else {
-            executeQuotaQuery(acc: acc, activeId: activeId, token: currentAccessToken, refreshToken: refreshToken, canRetry: true, completion: completion)
+            executeQuotaQuery(acc: acc, activeId: activeId, token: currentAccessToken, refreshToken: refreshToken, picture: accountPicture, canRetry: true, completion: completion)
         }
     }
 
@@ -481,6 +524,7 @@ public class QuotaService {
         activeId: String,
         token: String,
         refreshToken: String,
+        picture: String?,
         canRetry: Bool,
         completion: @escaping (AccountStatus) -> Void
     ) {
@@ -490,6 +534,15 @@ public class QuotaService {
         var quotaSummaryResp: QuotaSummaryResponse?
         var codeAssistCode = -1
         var codeAssistResp: LoadCodeAssistResponse?
+
+        // Proactively fetch avatar if missing
+        if picture == nil && !token.isEmpty {
+            AvatarManager.shared.fetchUserInfo(accessToken: token) { fetchedPic, _ in
+                if let p = fetchedPic {
+                    AccountManager.shared.updateAccountPicture(email: acc.email, picture: p)
+                }
+            }
+        }
 
         group.enter()
         queryGoogleQuotaSummary(accessToken: token) { statusCode, summary in
@@ -521,11 +574,12 @@ public class QuotaService {
                             remainingPercentage: -1,
                             activeModel: self.resolveModelForAccount(acc: acc, isActive: isActive),
                             subscriptionTier: self.getCachedTierForAccount(acc: acc),
-                            preferredModelId: acc.active_model ?? acc.model
+                            preferredModelId: acc.active_model ?? acc.model,
+                            picture: picture
                         ))
                         return
                     }
-                    self.executeQuotaQuery(acc: acc, activeId: activeId, token: newToken, refreshToken: refreshToken, canRetry: false, completion: completion)
+                    self.executeQuotaQuery(acc: acc, activeId: activeId, token: newToken, refreshToken: refreshToken, picture: picture, canRetry: false, completion: completion)
                 }
                 return
             }
@@ -558,7 +612,8 @@ public class QuotaService {
                 activeModel: modelName,
                 subscriptionTier: tierDisplayName,
                 tierId: resolvedTierId,
-                preferredModelId: acc.active_model ?? acc.model
+                preferredModelId: acc.active_model ?? acc.model,
+                picture: picture
             )
 
             if let summary = quotaSummaryResp, let groups = summary.groups {
@@ -571,16 +626,17 @@ public class QuotaService {
                         let window = (b.window ?? b.bucketId ?? "").lowercased()
                         if isGemini {
                             minFraction = min(minFraction, frac)
-                            if window.contains("5h") {
+                            if window.contains("5h") || window.contains("5-hour") || window.contains("5 hour") {
                                 status.gemini5hPercentage = pct
-                            } else if window.contains("week") {
-                                status.geminiWeeklyPercentage = pct
                                 status.geminiResetTime = b.resetTime
+                            } else if window.contains("week") || window.contains("7d") || window.contains("1w") {
+                                status.geminiWeeklyPercentage = pct
+                                status.geminiWeeklyResetTime = b.resetTime
                             }
                         } else {
-                            if window.contains("5h") {
+                            if window.contains("5h") || window.contains("5-hour") || window.contains("5 hour") {
                                 status.other5hPercentage = pct
-                            } else if window.contains("week") {
+                            } else if window.contains("week") || window.contains("7d") || window.contains("1w") {
                                 status.otherWeeklyPercentage = pct
                             }
                         }

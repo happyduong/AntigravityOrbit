@@ -6,7 +6,7 @@ public class AccountManager {
     private let homeDir: URL
     private let orbitDir: URL
     private let accountsFile: URL
-    private let accountsDir: URL
+    public let accountsDir: URL
     private let geminiDir: URL
 
     private init() {
@@ -78,6 +78,20 @@ public class AccountManager {
         let now = Int(Date().timeIntervalSince1970)
         let rawExpiry = credsJson["expiry_date"] as? Int ?? (now + 3600)
         let expirySec = (rawExpiry > 100_000_000_000) ? (rawExpiry / 1000) : rawExpiry
+        let rawIdToken = credsJson["id_token"] as? String ?? ""
+
+        var pictureUrl: String? = nil
+        if !rawIdToken.isEmpty {
+            let parts = rawIdToken.components(separatedBy: ".")
+            if parts.count > 1 {
+                var base64 = parts[1].replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+                base64 += String(repeating: "=", count: (4 - base64.count % 4) % 4)
+                if let data = Data(base64Encoded: base64),
+                   let claims = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    pictureUrl = claims["picture"] as? String
+                }
+            }
+        }
 
         // Create detail account object
         let tokenObj: [String: Any] = [
@@ -90,10 +104,10 @@ public class AccountManager {
             "project_id": "",
             "oauth_client_key": "",
             "is_gcp_tos": false,
-            "id_token": credsJson["id_token"] as? String ?? ""
+            "id_token": rawIdToken
         ]
 
-        let accountDetail: [String: Any] = [
+        var accountDetail: [String: Any] = [
             "id": newId,
             "email": activeEmail,
             "name": name,
@@ -118,6 +132,16 @@ public class AccountManager {
             "created_at": now,
             "last_used": now
         ]
+        if let pic = pictureUrl {
+            accountDetail["picture"] = pic
+            AvatarManager.shared.fetchAndCacheAvatar(accountId: newId, pictureUrl: pic)
+        } else if let accessToken = credsJson["access_token"] as? String, !accessToken.isEmpty {
+            AvatarManager.shared.fetchUserInfo(accessToken: accessToken) { [weak self] pic, _ in
+                if let p = pic {
+                    self?.updateAccountPicture(email: activeEmail, picture: p)
+                }
+            }
+        }
 
         // Save account file
         do {
@@ -137,7 +161,8 @@ public class AccountManager {
             disabled: false,
             proxy_disabled: false,
             created_at: now,
-            last_used: now
+            last_used: now,
+            picture: pictureUrl
         )
 
         var updatedAccounts = accountsFileModel.accounts
@@ -203,11 +228,16 @@ public class AccountManager {
 
             let id = entry["id"] as? String ?? UUID().uuidString.lowercased()
             let name = entry["name"] as? String ?? email.components(separatedBy: "@").first ?? email
+            let picture = entry["picture"] as? String ?? entry["avatar_url"] as? String
 
             // Save individual file
             let detailFileUrl = accountsDir.appendingPathComponent("\(id).json")
             if let entryData = try? JSONSerialization.data(withJSONObject: entry, options: .prettyPrinted) {
                 try? entryData.write(to: detailFileUrl, options: .atomic)
+            }
+
+            if let pic = picture, !pic.isEmpty {
+                AvatarManager.shared.fetchAndCacheAvatar(accountId: id, pictureUrl: pic)
             }
 
             let managed = ManagedAccount(
@@ -217,7 +247,8 @@ public class AccountManager {
                 disabled: entry["disabled"] as? Bool ?? false,
                 proxy_disabled: entry["proxy_disabled"] as? Bool ?? false,
                 created_at: now,
-                last_used: now
+                last_used: now,
+                picture: picture
             )
             updatedAccounts.append(managed)
             importedCount += 1
@@ -251,7 +282,7 @@ public class AccountManager {
     }
 
     // MARK: - 3. Add Account via Web Browser OAuth
-    public func addOAuthAccount(email: String, name: String, accessToken: String, refreshToken: String, idToken: String) -> (success: Bool, message: String) {
+    public func addOAuthAccount(email: String, name: String, accessToken: String, refreshToken: String, idToken: String, picture: String? = nil) -> (success: Bool, message: String) {
         guard !email.isEmpty else {
             return (false, "Email không hợp lệ.")
         }
@@ -262,7 +293,8 @@ public class AccountManager {
         let now = Int(Date().timeIntervalSince1970)
 
         // If account already exists, update its tokens
-        if let existing = accountsFileModel.accounts.first(where: { $0.email.lowercased() == trimmedEmail }) {
+        if let existingIndex = accountsFileModel.accounts.firstIndex(where: { $0.email.lowercased() == trimmedEmail }) {
+            let existing = accountsFileModel.accounts[existingIndex]
             let detailFileUrl = accountsDir.appendingPathComponent("\(existing.id).json")
             if var detailJson = (try? Data(contentsOf: detailFileUrl)).flatMap({ try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }) {
                 var tokenObj = detailJson["token"] as? [String: Any] ?? [:]
@@ -275,10 +307,32 @@ public class AccountManager {
                 detailJson["token"] = tokenObj
                 detailJson["disabled"] = false
                 detailJson["last_used"] = now
+                if let pic = picture {
+                    detailJson["picture"] = pic
+                    AvatarManager.shared.fetchAndCacheAvatar(accountId: existing.id, pictureUrl: pic)
+                }
                 if let updatedData = try? JSONSerialization.data(withJSONObject: detailJson, options: .prettyPrinted) {
                     try? updatedData.write(to: detailFileUrl, options: .atomic)
                 }
             }
+
+            if let pic = picture {
+                let updated = ManagedAccount(
+                    id: existing.id,
+                    email: existing.email,
+                    name: existing.name,
+                    disabled: existing.disabled,
+                    proxy_disabled: existing.proxy_disabled,
+                    created_at: existing.created_at,
+                    last_used: existing.last_used,
+                    model: existing.model,
+                    active_model: existing.active_model,
+                    picture: pic
+                )
+                accountsFileModel.accounts[existingIndex] = updated
+                _ = saveAccountsFile(accountsFileModel)
+            }
+
             return (true, "Đã làm mới token cho tài khoản [\(trimmedEmail)] thành công!")
         }
 
@@ -299,7 +353,7 @@ public class AccountManager {
             "id_token": idToken
         ]
 
-        let accountDetail: [String: Any] = [
+        var accountDetail: [String: Any] = [
             "id": newId,
             "email": trimmedEmail,
             "name": displayName,
@@ -324,6 +378,10 @@ public class AccountManager {
             "created_at": now,
             "last_used": now
         ]
+        if let pic = picture {
+            accountDetail["picture"] = pic
+            AvatarManager.shared.fetchAndCacheAvatar(accountId: newId, pictureUrl: pic)
+        }
 
         let detailFileUrl = accountsDir.appendingPathComponent("\(newId).json")
         if let detailData = try? JSONSerialization.data(withJSONObject: accountDetail, options: .prettyPrinted) {
@@ -337,7 +395,8 @@ public class AccountManager {
             disabled: false,
             proxy_disabled: false,
             created_at: now,
-            last_used: now
+            last_used: now,
+            picture: picture
         )
 
         accountsFileModel.accounts.append(newManagedAccount)
@@ -503,7 +562,8 @@ public class AccountManager {
             created_at: existing.created_at,
             last_used: existing.last_used,
             model: existing.model,
-            active_model: existing.active_model
+            active_model: existing.active_model,
+            picture: existing.picture
         )
         accountsFileModel.accounts[targetIndex] = updated
 
@@ -547,7 +607,8 @@ public class AccountManager {
             created_at: existing.created_at,
             last_used: existing.last_used,
             model: cleanModel,
-            active_model: cleanModel
+            active_model: cleanModel,
+            picture: existing.picture
         )
         accountsFileModel.accounts[targetIndex] = updated
 
@@ -577,6 +638,59 @@ public class AccountManager {
             return (true, "Đã cập nhật model thành [\(modelLabel)] thành công!")
         } else {
             return (false, "Lỗi cập nhật tệp accounts.json.")
+        }
+    }
+
+    // MARK: - 7. Update Account Picture
+    public func updateAccountPicture(email: String, picture: String) {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespaces).lowercased()
+        let accountsFileModel = getOrCreateAccountsFile()
+        var updated = false
+        var targetId: String? = nil
+
+        let newAccounts = accountsFileModel.accounts.map { acc -> ManagedAccount in
+            if acc.email.lowercased() == trimmedEmail {
+                targetId = acc.id
+                updated = true
+                return ManagedAccount(
+                    id: acc.id,
+                    email: acc.email,
+                    name: acc.name,
+                    disabled: acc.disabled,
+                    proxy_disabled: acc.proxy_disabled,
+                    created_at: acc.created_at,
+                    last_used: acc.last_used,
+                    model: acc.model,
+                    active_model: acc.active_model,
+                    picture: picture
+                )
+            }
+            return acc
+        }
+
+        if updated {
+            let updatedFile = AccountsFile(
+                version: accountsFileModel.version ?? "2.0",
+                accounts: newAccounts,
+                current_account_id: accountsFileModel.current_account_id,
+                current_target_ide: accountsFileModel.current_target_ide,
+                current_classic_account_id: accountsFileModel.current_classic_account_id,
+                current_ide_account_id: accountsFileModel.current_ide_account_id,
+                current_agy_account_id: accountsFileModel.current_agy_account_id
+            )
+            _ = saveAccountsFile(updatedFile)
+        }
+
+        let accId = targetId ?? accountsFileModel.accounts.first(where: { $0.email.lowercased() == trimmedEmail })?.id
+        if let id = accId {
+            let detailUrl = accountsDir.appendingPathComponent("\(id).json")
+            if var detailJson = (try? Data(contentsOf: detailUrl)).flatMap({ try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }) {
+                detailJson["picture"] = picture
+                if let data = try? JSONSerialization.data(withJSONObject: detailJson, options: .prettyPrinted) {
+                    try? data.write(to: detailUrl, options: .atomic)
+                }
+            }
+            AvatarManager.shared.fetchAndCacheAvatar(accountId: id, pictureUrl: picture)
         }
     }
 

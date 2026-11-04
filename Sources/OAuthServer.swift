@@ -265,9 +265,11 @@ public class OAuthServer {
 
             let refreshToken = json["refresh_token"] as? String ?? ""
 
-            // Decode email from id_token
-            let email = self.extractEmailFromIdToken(idToken) ?? "unknown@gmail.com"
-            let name = email.components(separatedBy: "@").first ?? email
+            // Decode claims from id_token
+            let claims = self.decodeIdToken(idToken)
+            let email = claims?["email"] as? String ?? "unknown@gmail.com"
+            let name = claims?["name"] as? String ?? (email.components(separatedBy: "@").first ?? email)
+            let picture = claims?["picture"] as? String
 
             // Add account to manager
             let result = AccountManager.shared.addOAuthAccount(
@@ -275,15 +277,25 @@ public class OAuthServer {
                 name: name,
                 accessToken: accessToken,
                 refreshToken: refreshToken,
-                idToken: idToken
+                idToken: idToken,
+                picture: picture
             )
+
+            // If picture was not in id_token, fetch via userinfo
+            if picture == nil {
+                AvatarManager.shared.fetchUserInfo(accessToken: accessToken) { fetchedPic, _ in
+                    if let pic = fetchedPic {
+                        AccountManager.shared.updateAccountPicture(email: email, picture: pic)
+                    }
+                }
+            }
 
             completion(result.success, result.message)
         }
         task.resume()
     }
 
-    private func extractEmailFromIdToken(_ idToken: String) -> String? {
+    private func decodeIdToken(_ idToken: String) -> [String: Any]? {
         let parts = idToken.components(separatedBy: ".")
         guard parts.count > 1 else { return nil }
 
@@ -294,7 +306,7 @@ public class OAuthServer {
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return nil
         }
-        return json["email"] as? String
+        return json
     }
 
     public func stopServer() {

@@ -10,6 +10,7 @@ public struct ManagedAccount: Codable {
     public let last_used: Int?
     public let model: String?
     public let active_model: String?
+    public let picture: String?
 
     public init(
         id: String,
@@ -20,7 +21,8 @@ public struct ManagedAccount: Codable {
         created_at: Int? = nil,
         last_used: Int? = nil,
         model: String? = nil,
-        active_model: String? = nil
+        active_model: String? = nil,
+        picture: String? = nil
     ) {
         self.id = id
         self.email = email
@@ -31,6 +33,7 @@ public struct ManagedAccount: Codable {
         self.last_used = last_used
         self.model = model
         self.active_model = active_model
+        self.picture = picture
     }
 
     public func displayName(showAlias: Bool) -> String {
@@ -73,6 +76,7 @@ public struct AccountDetailFile: Codable {
     public let model: String?
     public let active_model: String?
     public let quota: AccountDetailQuota?
+    public let picture: String?
 
     public init(
         id: String,
@@ -81,7 +85,8 @@ public struct AccountDetailFile: Codable {
         token: AccountToken? = nil,
         model: String? = nil,
         active_model: String? = nil,
-        quota: AccountDetailQuota? = nil
+        quota: AccountDetailQuota? = nil,
+        picture: String? = nil
     ) {
         self.id = id
         self.email = email
@@ -90,6 +95,7 @@ public struct AccountDetailFile: Codable {
         self.model = model
         self.active_model = active_model
         self.quota = quota
+        self.picture = picture
     }
 }
 
@@ -213,6 +219,7 @@ public struct AccountStatus {
     public var gemini5hPercentage: Int?
     public var geminiWeeklyPercentage: Int?
     public var geminiResetTime: String?
+    public var geminiWeeklyResetTime: String?
     public var other5hPercentage: Int?
     public var otherWeeklyPercentage: Int?
     public var lastUpdated: Date?
@@ -220,6 +227,7 @@ public struct AccountStatus {
     public var subscriptionTier: String?
     public var tierId: String?
     public var preferredModelId: String?
+    public var picture: String?
 
     public init(
         id: String,
@@ -230,13 +238,15 @@ public struct AccountStatus {
         gemini5hPercentage: Int? = nil,
         geminiWeeklyPercentage: Int? = nil,
         geminiResetTime: String? = nil,
+        geminiWeeklyResetTime: String? = nil,
         other5hPercentage: Int? = nil,
         otherWeeklyPercentage: Int? = nil,
         lastUpdated: Date? = Date(),
         activeModel: String? = nil,
         subscriptionTier: String? = nil,
         tierId: String? = nil,
-        preferredModelId: String? = nil
+        preferredModelId: String? = nil,
+        picture: String? = nil
     ) {
         self.id = id
         self.email = email
@@ -246,6 +256,7 @@ public struct AccountStatus {
         self.gemini5hPercentage = gemini5hPercentage
         self.geminiWeeklyPercentage = geminiWeeklyPercentage
         self.geminiResetTime = geminiResetTime
+        self.geminiWeeklyResetTime = geminiWeeklyResetTime
         self.other5hPercentage = other5hPercentage
         self.otherWeeklyPercentage = otherWeeklyPercentage
         self.lastUpdated = lastUpdated
@@ -253,6 +264,7 @@ public struct AccountStatus {
         self.subscriptionTier = subscriptionTier
         self.tierId = tierId
         self.preferredModelId = preferredModelId
+        self.picture = picture
     }
 
     public var displayModelName: String {
