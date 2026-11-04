@@ -223,7 +223,28 @@ public class LocalizationManager {
             "about.license": "License",
             "about.license_val": "MIT License",
             "about.copyright": "Copyright",
-            "about.copyright_val": "© 2026 Happy Duong. Released under the MIT License."
+            "about.copyright_val": "© 2026 Happy Duong. Released under the MIT License.",
+
+            "popover.5h_limit": "5-Hour",
+            "popover.weekly_limit": "Weekly",
+            "popover.model_label": "Model:",
+            "popover.standby_accounts": "STANDBY ACCOUNTS (%d)",
+            "popover.btn_switch": "Switch",
+            "popover.activate_account": "Activate %@",
+            "popover.shortcut_rotate": "⌘R Rotate",
+            "popover.shortcut_settings": "⌘, Settings",
+            "settings.sidebar_config": "CONFIGURATION",
+            "settings.proxy_status_desc": "Syncing with IDE & agy",
+            "settings.accounts_desc": "Monitor actual quotas and configure round-robin account rotation",
+            "settings.btn_add_account": "Add Account",
+            "settings.btn_activate": "Activate",
+            "settings.rotation_subtitle": "Automatically switch accounts when quota is low to preserve workflow",
+            "settings.system_subtitle": "Customize interface language, launch at login, and notifications",
+            "settings.language_instant_note": "Changes take effect immediately without restarting the application",
+            "about.app_version": "Version 1.0.0 • Native Swift & AppKit",
+            "about.app_desc": "Optimized open-source Menu Bar app, automatically monitoring quotas and rotating Google AI Pro / Ultra accounts 24/7.",
+            "about.author_label": "Author:",
+            "about.license_label": "License:"
         ],
 
         // MARK: 2. Tiếng Việt
@@ -239,7 +260,7 @@ public class LocalizationManager {
             "menu.account_settings": "Cài đặt tài khoản...",
             "menu.language_switcher": "Ngôn ngữ",
             "menu.settings": "Cài đặt...",
-            "menu.about": "About Antigravity Orbit",
+            "menu.about": "Giới thiệu về Antigravity Orbit",
             "menu.quit": "Thoát",
             "menu.week_label": "Tuần: %d%%",
             "menu.auth_error": "Lỗi kết nối / Hết hạn token",
@@ -357,7 +378,7 @@ public class LocalizationManager {
             "notif.reason_low_token": "còn %d%% token 5h (dưới ngưỡng %d%%)",
             "notif.reason_manual": "thao tác thủ công",
 
-            "about.title": "About Antigravity Orbit",
+            "about.title": "Giới thiệu về Antigravity Orbit",
             "about.version": "Phiên bản %@",
             "about.contact_header": "Thông tin liên hệ:",
             "about.email": "Email",
@@ -369,7 +390,28 @@ public class LocalizationManager {
             "about.license": "Giấy phép",
             "about.license_val": "MIT License",
             "about.copyright": "Bản quyền",
-            "about.copyright_val": "© 2026 Happy Duong. Phát hành theo giấy phép MIT."
+            "about.copyright_val": "© 2026 Happy Duong. Phát hành theo giấy phép MIT.",
+
+            "popover.5h_limit": "5 Giờ",
+            "popover.weekly_limit": "Tuần",
+            "popover.model_label": "Model:",
+            "popover.standby_accounts": "TÀI KHOẢN DỰ PHÒNG (%d)",
+            "popover.btn_switch": "Chuyển",
+            "popover.activate_account": "Kích hoạt %@",
+            "popover.shortcut_rotate": "⌘R Xoay",
+            "popover.shortcut_settings": "⌘, Cài đặt",
+            "settings.sidebar_config": "CẤU HÌNH",
+            "settings.proxy_status_desc": "Tự động đồng bộ IDE & agy",
+            "settings.accounts_desc": "Theo dõi hạn mức thực tế và cấu hình danh sách tài khoản xoay vòng",
+            "settings.btn_add_account": "Thêm tài khoản",
+            "settings.btn_activate": "Kích hoạt",
+            "settings.rotation_subtitle": "Tự động chuyển đổi tài khoản khi cạn token để bảo toàn luồng làm việc",
+            "settings.system_subtitle": "Tùy biến ngôn ngữ, khởi động cùng hệ thống và thông báo đẩy",
+            "settings.language_instant_note": "Thay đổi tức thì mà không cần khởi động lại ứng dụng",
+            "about.app_version": "Phiên bản 1.0.0 • Native Swift & AppKit",
+            "about.app_desc": "Ứng dụng Menu Bar mã nguồn mở tối ưu, tự động giám sát quota và xoay vòng tài khoản Google AI Pro / Ultra 24/7.",
+            "about.author_label": "Tác giả:",
+            "about.license_label": "Giấy phép:"
         ],
 
         // MARK: 3. 简体中文 (Simplified Chinese)
@@ -515,7 +557,28 @@ public class LocalizationManager {
             "about.license": "开源协议",
             "about.license_val": "MIT License",
             "about.copyright": "版权声明",
-            "about.copyright_val": "© 2026 Happy Duong. 基于 MIT 协议开源。"
+            "about.copyright_val": "© 2026 Happy Duong. 基于 MIT 协议开源。",
+
+            "popover.5h_limit": "5小时",
+            "popover.weekly_limit": "每周",
+            "popover.model_label": "模型：",
+            "popover.standby_accounts": "备用账户 (%d)",
+            "popover.btn_switch": "切换",
+            "popover.activate_account": "激活 %@",
+            "popover.shortcut_rotate": "⌘R 轮换",
+            "popover.shortcut_settings": "⌘, 设置",
+            "settings.sidebar_config": "配置",
+            "settings.proxy_status_desc": "与 IDE 及 agy 保持同步",
+            "settings.accounts_desc": "监控实际配额并配置多账户自动轮换",
+            "settings.btn_add_account": "添加账户",
+            "settings.btn_activate": "激活",
+            "settings.rotation_subtitle": "在配额不足时自动切换账户以保持工作流畅",
+            "settings.system_subtitle": "自定义界面语言、开机启动和通知提醒",
+            "settings.language_instant_note": "即时生效，无需重启应用程序",
+            "about.app_version": "版本 1.0.0 • 原生 Swift & AppKit",
+            "about.app_desc": "优化的开源菜单栏应用，全天候自动监控配额并轮换 Google AI Pro / Ultra 账户。",
+            "about.author_label": "作者：",
+            "about.license_label": "开源协议："
         ],
 
         // MARK: 4. 日本語 (Japanese)
@@ -661,7 +724,28 @@ public class LocalizationManager {
             "about.license": "ライセンス",
             "about.license_val": "MIT License",
             "about.copyright": "著作権",
-            "about.copyright_val": "© 2026 Happy Duong. MIT ライセンスに基づき公開。"
+            "about.copyright_val": "© 2026 Happy Duong. MIT ライセンスに基づき公開。",
+
+            "popover.5h_limit": "5時間",
+            "popover.weekly_limit": "週間",
+            "popover.model_label": "モデル:",
+            "popover.standby_accounts": "スタンバイアカウント (%d)",
+            "popover.btn_switch": "切替",
+            "popover.activate_account": "%@ を有効化",
+            "popover.shortcut_rotate": "⌘R ローテーション",
+            "popover.shortcut_settings": "⌘, 設定",
+            "settings.sidebar_config": "構成",
+            "settings.proxy_status_desc": "IDE & agy と同期中",
+            "settings.accounts_desc": "クォータを監視し、アカウントの自動ローテーションを設定",
+            "settings.btn_add_account": "アカウントを追加",
+            "settings.btn_activate": "有効化",
+            "settings.rotation_subtitle": "トークン不足時に自動的にアカウントを切り替えて作業の中断を防ぎます",
+            "settings.system_subtitle": "インターフェース言語、ログイン時の起動、通知をカスタマイズ",
+            "settings.language_instant_note": "アプリを再起動することなく即座に適用されます",
+            "about.app_version": "バージョン 1.0.0 • Native Swift & AppKit",
+            "about.app_desc": "最適化されたオープンソースのメニューバーアプリ。24時間体制でクォータを監視し、Google AI Pro / Ultra アカウントを自動ローテーションします。",
+            "about.author_label": "作成者:",
+            "about.license_label": "ライセンス:"
         ],
 
         // MARK: 5. 한국어 (Korean)
@@ -807,7 +891,28 @@ public class LocalizationManager {
             "about.license": "라이선스",
             "about.license_val": "MIT License",
             "about.copyright": "저작권",
-            "about.copyright_val": "© 2026 Happy Duong. MIT 라이선스에 따라 배포됩니다."
+            "about.copyright_val": "© 2026 Happy Duong. MIT 라이선스에 따라 배포됩니다。",
+
+            "popover.5h_limit": "5시간",
+            "popover.weekly_limit": "주간",
+            "popover.model_label": "모델:",
+            "popover.standby_accounts": "대기 계정 (%d)",
+            "popover.btn_switch": "전환",
+            "popover.activate_account": "%@ 활성화",
+            "popover.shortcut_rotate": "⌘R 순환",
+            "popover.shortcut_settings": "⌘, 설정",
+            "settings.sidebar_config": "구성",
+            "settings.proxy_status_desc": "IDE 및 agy와 동기화 중",
+            "settings.accounts_desc": "실제 할당량을 모니터링하고 계정 자동 순환 구성",
+            "settings.btn_add_account": "계정 추가",
+            "settings.btn_activate": "활성화",
+            "settings.rotation_subtitle": "작업 흐름 유지를 위해 토큰 부족 시 자동으로 계정을 전환합니다",
+            "settings.system_subtitle": "인터페이스 언어, 로그인 시 실행 및 알림 설정",
+            "settings.language_instant_note": "애플리케이션을 다시 시작하지 않고도 즉시 적용됩니다",
+            "about.app_version": "버전 1.0.0 • Native Swift & AppKit",
+            "about.app_desc": "최적화된 오픈 소스 메뉴 바 앱으로 Google AI Pro / Ultra 계정의 할당량을 24시간 모니터링하고 자동 순환합니다。",
+            "about.author_label": "작성자:",
+            "about.license_label": "라이선스:"
         ],
 
         // MARK: 6. Español (Spanish)
@@ -951,7 +1056,28 @@ public class LocalizationManager {
             "about.license": "Licencia",
             "about.license_val": "Licencia MIT",
             "about.copyright": "Derechos de autor",
-            "about.copyright_val": "© 2026 Happy Duong. Publicado bajo la licencia MIT."
+            "about.copyright_val": "© 2026 Happy Duong. Publicado bajo la licencia MIT.",
+
+            "popover.5h_limit": "5 Horas",
+            "popover.weekly_limit": "Semanal",
+            "popover.model_label": "Modelo:",
+            "popover.standby_accounts": "CUENTAS EN ESPERA (%d)",
+            "popover.btn_switch": "Cambiar",
+            "popover.activate_account": "Activar %@",
+            "popover.shortcut_rotate": "⌘R Rotar",
+            "popover.shortcut_settings": "⌘, Ajustes",
+            "settings.sidebar_config": "CONFIGURACIÓN",
+            "settings.proxy_status_desc": "Sincronizando con IDE y agy",
+            "settings.accounts_desc": "Monitoree cuotas reales y configure la rotación automática de cuentas",
+            "settings.btn_add_account": "Agregar cuenta",
+            "settings.btn_activate": "Activar",
+            "settings.rotation_subtitle": "Cambia de cuenta automáticamente cuando el token se agota para no interrumpir el flujo",
+            "settings.system_subtitle": "Personalice el idioma, el inicio con el sistema y las notificaciones",
+            "settings.language_instant_note": "Los cambios surten efecto de inmediato sin reiniciar la aplicación",
+            "about.app_version": "Versión 1.0.0 • Nativo Swift y AppKit",
+            "about.app_desc": "Aplicación de barra de menú de código abierto optimizada, monitorea cuotas y rota cuentas Google AI Pro / Ultra 24/7.",
+            "about.author_label": "Autor:",
+            "about.license_label": "Licencia:"
         ],
 
         // MARK: 7. Français (French)
@@ -1095,7 +1221,28 @@ public class LocalizationManager {
             "about.license": "Licence",
             "about.license_val": "Licence MIT",
             "about.copyright": "Droits d'auteur",
-            "about.copyright_val": "© 2026 Happy Duong. Publié sous la licence MIT."
+            "about.copyright_val": "© 2026 Happy Duong. Publié sous la licence MIT.",
+
+            "popover.5h_limit": "5 Heures",
+            "popover.weekly_limit": "Hebdo",
+            "popover.model_label": "Modèle :",
+            "popover.standby_accounts": "COMPTES EN ATTENTE (%d)",
+            "popover.btn_switch": "Changer",
+            "popover.activate_account": "Activer %@",
+            "popover.shortcut_rotate": "⌘R Pivoter",
+            "popover.shortcut_settings": "⌘, Réglages",
+            "settings.sidebar_config": "CONFIGURATION",
+            "settings.proxy_status_desc": "Synchronisation avec IDE & agy",
+            "settings.accounts_desc": "Surveiller les quotas réels et configurer la rotation automatique des comptes",
+            "settings.btn_add_account": "Ajouter un compte",
+            "settings.btn_activate": "Activer",
+            "settings.rotation_subtitle": "Changer automatiquement de compte lorsque les jetons sont faibles pour préserver le flux",
+            "settings.system_subtitle": "Personnaliser la langue de l'interface, le lancement au démarrage et les notifications",
+            "settings.language_instant_note": "Prend effet immédiatement sans redémarrer l'application",
+            "about.app_version": "Version 1.0.0 • Natif Swift & AppKit",
+            "about.app_desc": "Application de barre de menus open-source optimisée, surveillant les quotas et faisant pivoter les comptes Google AI Pro / Ultra 24/7.",
+            "about.author_label": "Auteur :",
+            "about.license_label": "Licence :"
         ],
 
         // MARK: 8. Deutsch (German)
@@ -1239,7 +1386,28 @@ public class LocalizationManager {
             "about.license": "Lizenz",
             "about.license_val": "MIT-Lizenz",
             "about.copyright": "Urheberrecht",
-            "about.copyright_val": "© 2026 Happy Duong. Veröffentlicht unter der MIT-Lizenz."
+            "about.copyright_val": "© 2026 Happy Duong. Veröffentlicht unter der MIT-Lizenz.",
+
+            "popover.5h_limit": "5 Stunden",
+            "popover.weekly_limit": "Wöchentlich",
+            "popover.model_label": "Modell:",
+            "popover.standby_accounts": "STANDBY-KONTEN (%d)",
+            "popover.btn_switch": "Wechseln",
+            "popover.activate_account": "%@ aktivieren",
+            "popover.shortcut_rotate": "⌘R Rotieren",
+            "popover.shortcut_settings": "⌘, Einstellungen",
+            "settings.sidebar_config": "KONFIGURATION",
+            "settings.proxy_status_desc": "Synchronisiert mit IDE & agy",
+            "settings.accounts_desc": "Echtzeit-Quotas überwachen und automatische Kontorotation einrichten",
+            "settings.btn_add_account": "Konto hinzufügen",
+            "settings.btn_activate": "Aktivieren",
+            "settings.rotation_subtitle": "Konten bei Token-Knappheit automatisch wechseln, um den Arbeitsfluss zu erhalten",
+            "settings.system_subtitle": "Sprache, Autostart bei Anmeldung und Benachrichtigungen anpassen",
+            "settings.language_instant_note": "Wird sofort wirksam, ohne die Anwendung neu zu starten",
+            "about.app_version": "Version 1.0.0 • Native Swift & AppKit",
+            "about.app_desc": "Optimierte Open-Source-Menüleisten-App zur kontinuierlichen Überwachung und Rotation von Google AI Pro / Ultra Konten.",
+            "about.author_label": "Autor:",
+            "about.license_label": "Lizenz:"
         ],
 
         // MARK: 9. Português (Portuguese)
@@ -1383,7 +1551,28 @@ public class LocalizationManager {
             "about.license": "Licença",
             "about.license_val": "Licença MIT",
             "about.copyright": "Direitos autorais",
-            "about.copyright_val": "© 2026 Happy Duong. Publicado sob a licença MIT."
+            "about.copyright_val": "© 2026 Happy Duong. Publicado sob a licença MIT.",
+
+            "popover.5h_limit": "5 Horas",
+            "popover.weekly_limit": "Semanal",
+            "popover.model_label": "Modelo:",
+            "popover.standby_accounts": "CONTAS EM ESPERA (%d)",
+            "popover.btn_switch": "Alternar",
+            "popover.activate_account": "Ativar %@",
+            "popover.shortcut_rotate": "⌘R Alternar",
+            "popover.shortcut_settings": "⌘, Ajustes",
+            "settings.sidebar_config": "CONFIGURAÇÃO",
+            "settings.proxy_status_desc": "Sincronizando com IDE e agy",
+            "settings.accounts_desc": "Monitore cotas reais e configure a rotação automática de contas",
+            "settings.btn_add_account": "Adicionar conta",
+            "settings.btn_activate": "Ativar",
+            "settings.rotation_subtitle": "Alterna contas automaticamente quando os tokens estiverem baixos para manter o fluxo",
+            "settings.system_subtitle": "Personalize idioma da interface, inicialização no login e notificações",
+            "settings.language_instant_note": "Entra em vigor imediatamente sem reiniciar o aplicativo",
+            "about.app_version": "Versão 1.0.0 • Nativo Swift & AppKit",
+            "about.app_desc": "Aplicativo de barra de menus de código aberto otimizado, monitora cotas e alterna contas Google AI Pro / Ultra 24/7.",
+            "about.author_label": "Autor:",
+            "about.license_label": "Licença:"
         ],
 
         // MARK: 10. Русский (Russian)
@@ -1527,7 +1716,28 @@ public class LocalizationManager {
             "about.license": "Лицензия",
             "about.license_val": "Лицензия MIT",
             "about.copyright": "Авторские права",
-            "about.copyright_val": "© 2026 Happy Duong. Выпущено под лицензией MIT."
+            "about.copyright_val": "© 2026 Happy Duong. Выпущено под лицензией MIT.",
+
+            "popover.5h_limit": "5 часов",
+            "popover.weekly_limit": "За неделю",
+            "popover.model_label": "Модель:",
+            "popover.standby_accounts": "РЕЗЕРВНЫЕ АККАУНТЫ (%d)",
+            "popover.btn_switch": "Переключить",
+            "popover.activate_account": "Активировать %@",
+            "popover.shortcut_rotate": "⌘R Ротация",
+            "popover.shortcut_settings": "⌘, Настройки",
+            "settings.sidebar_config": "КОНФИГУРАЦИЯ",
+            "settings.proxy_status_desc": "Синхронизация с IDE и agy",
+            "settings.accounts_desc": "Мониторинг фактических квот и настройка автоматической ротации аккаунтов",
+            "settings.btn_add_account": "Добавить аккаунт",
+            "settings.btn_activate": "Активировать",
+            "settings.rotation_subtitle": "Автоматическое переключение аккаунтов при исчерпании токенов для бесперебойной работы",
+            "settings.system_subtitle": "Настройка языка интерфейса, автозапуска и уведомлений",
+            "settings.language_instant_note": "Вступает в силу немедленно без перезапуска приложения",
+            "about.app_version": "Версия 1.0.0 • Native Swift & AppKit",
+            "about.app_desc": "Оптимизированное приложение панели меню с открытым исходным кодом, круглосуточный мониторинг квот и ротация аккаунтов Google AI Pro / Ultra.",
+            "about.author_label": "Автор:",
+            "about.license_label": "Лицензия:"
         ]
     ]
 }

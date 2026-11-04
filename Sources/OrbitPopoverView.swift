@@ -303,7 +303,7 @@ private struct ActiveAccountHeroCard: View {
                 // 5-Hour Limit
                 VStack(spacing: 3) {
                     HStack {
-                        Text("5 Giờ")
+                        Text(L10n.tr("popover.5h_limit"))
                             .font(.system(size: 11, weight: .medium))
                             .foregroundColor(.primary)
 
@@ -328,7 +328,7 @@ private struct ActiveAccountHeroCard: View {
                 if let weekly = account.geminiWeeklyPercentage {
                     VStack(spacing: 3) {
                         HStack {
-                            Text("Tuần")
+                            Text(L10n.tr("popover.weekly_limit"))
                                 .font(.system(size: 10.5))
                                 .foregroundColor(.secondary)
 
@@ -349,7 +349,7 @@ private struct ActiveAccountHeroCard: View {
 
             // Row 4: Inline Model Selector Menu
             HStack {
-                Text("Model:")
+                Text(L10n.tr("popover.model_label"))
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
 
@@ -432,6 +432,7 @@ private struct ActiveAccountHeroCard: View {
                     .cornerRadius(6)
                 }
                 .menuStyle(BorderlessButtonMenuStyle())
+                .menuIndicator(.hidden)
             }
         }
         .padding(10)
@@ -518,7 +519,7 @@ private struct StandbyAccountsSection: View {
     var body: some View {
         VStack(spacing: 6) {
             HStack {
-                Text("TÀI KHOẢN DỰ PHÒNG (\(viewModel.standbyAccounts.count))")
+                Text(L10n.tr("popover.standby_accounts", viewModel.standbyAccounts.count))
                     .font(.system(size: 9.5, weight: .bold))
                     .foregroundColor(.secondary)
                     .tracking(0.5)
@@ -584,7 +585,7 @@ private struct StandbyAccountRow: View {
             Button(action: {
                 viewModel.onSwitchAccount?(account.id)
             }) {
-                Text(L10n.tr("menu.switch_to_account").contains("Switch") ? "Switch" : "Chuyển")
+                Text(L10n.tr("popover.btn_switch"))
                     .font(.system(size: 9.5, weight: .semibold))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
@@ -631,7 +632,7 @@ private struct StandbyAccountRow: View {
 
     private var quotaSubtext: String {
         if let wk = account.geminiWeeklyPercentage {
-            return "5h: \(pct)% • Tuần: \(wk)%"
+            return "5h: \(pct)% • \(L10n.tr("menu.week_label", wk))"
         }
         return "5h: \(pct)%"
     }
@@ -774,7 +775,7 @@ private struct NoActiveAccountBanner: View {
                 Button(action: {
                     viewModel.onSwitchAccount?(first.id)
                 }) {
-                    Text("Kích hoạt \(first.displayName(showAlias: viewModel.showAccountAlias))")
+                    Text(L10n.tr("popover.activate_account", first.displayName(showAlias: viewModel.showAccountAlias)))
                         .font(.system(size: 11, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 4)
@@ -804,7 +805,7 @@ private struct FooterBar: View {
                         viewModel.onSelectLanguage?(lang)
                     }) {
                         HStack {
-                            Text("\(lang.flag) \(lang.displayName)")
+                            Text("\(lang.flag)  \(lang.displayName)")
                             if lang == viewModel.currentLanguage {
                                 Text("✓")
                             }
@@ -812,22 +813,28 @@ private struct FooterBar: View {
                     }
                 }
             } label: {
-                HStack(spacing: 3) {
+                HStack(spacing: 4) {
                     Text("\(viewModel.currentLanguage.flag) \(viewModel.currentLanguage.displayName)")
-                        .font(.system(size: 10))
+                        .font(.system(size: 10.5, weight: .medium))
                         .foregroundColor(.secondary)
-                    Image(systemName: "chevron.up")
-                        .font(.system(size: 7))
-                        .foregroundColor(.secondary)
+
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundColor(.secondary.opacity(0.7))
                 }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .background(Color.secondary.opacity(0.08))
+                .cornerRadius(5)
             }
             .menuStyle(BorderlessButtonMenuStyle())
+            .menuIndicator(.hidden)
 
             Spacer()
 
             // Subtle Shortcuts
             HStack(spacing: 6) {
-                Text("⌘R Xoay")
+                Text(L10n.tr("popover.shortcut_rotate"))
                     .font(.system(size: 9.5, design: .monospaced))
                     .foregroundColor(.secondary)
 
@@ -835,7 +842,7 @@ private struct FooterBar: View {
                     .foregroundColor(.secondary)
                     .font(.system(size: 8))
 
-                Text("⌘, Cài đặt")
+                Text(L10n.tr("popover.shortcut_settings"))
                     .font(.system(size: 9.5, design: .monospaced))
                     .foregroundColor(.secondary)
                     .onTapGesture {

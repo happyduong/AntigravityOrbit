@@ -10,10 +10,10 @@ public enum SettingsTab: Int, CaseIterable {
 
     public var title: String {
         switch self {
-        case .accounts: return L10n.tr("settings.tab_accounts")
-        case .rotation: return L10n.tr("settings.tab_rotation")
-        case .system: return L10n.tr("settings.tab_system")
-        case .about: return L10n.tr("menu.about")
+        case .accounts: return L10n.tr("settings.tab_accounts").trimmingCharacters(in: .whitespaces)
+        case .rotation: return L10n.tr("settings.tab_rotation").trimmingCharacters(in: .whitespaces)
+        case .system: return L10n.tr("settings.tab_system").trimmingCharacters(in: .whitespaces)
+        case .about: return L10n.tr("menu.about").replacingOccurrences(of: "...", with: "").trimmingCharacters(in: .whitespaces)
         }
     }
 
@@ -139,7 +139,7 @@ private struct SettingsSidebarView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             // Header
-            Text("CẤU HÌNH")
+            Text(L10n.tr("settings.sidebar_config"))
                 .font(.system(size: 10, weight: .bold))
                 .foregroundColor(.secondary)
                 .tracking(0.8)
@@ -172,7 +172,7 @@ private struct SettingsSidebarView: View {
                         .foregroundColor(.primary)
                 }
 
-                Text("Tự động đồng bộ IDE & agy")
+                Text(L10n.tr("settings.proxy_status_desc"))
                     .font(.system(size: 9.5))
                     .foregroundColor(.secondary)
             }
@@ -270,7 +270,7 @@ private struct AccountsTabPane: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.primary)
 
-                    Text("Theo dõi hạn mức thực tế và cấu hình danh sách tài khoản xoay vòng")
+                    Text(L10n.tr("settings.accounts_desc"))
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
@@ -306,7 +306,7 @@ private struct AccountsTabPane: View {
                     HStack(spacing: 4) {
                         Image(systemName: "plus")
                             .font(.system(size: 10, weight: .bold))
-                        Text("Thêm tài khoản")
+                        Text(L10n.tr("settings.btn_add_account"))
                             .font(.system(size: 11.5, weight: .semibold))
                         Image(systemName: "chevron.down")
                             .font(.system(size: 8))
@@ -318,6 +318,7 @@ private struct AccountsTabPane: View {
                     .cornerRadius(6)
                 }
                 .menuStyle(BorderlessButtonMenuStyle())
+                .menuIndicator(.hidden)
             }
 
             // Options Bar (Alias Toggle & Refresh)
@@ -446,7 +447,7 @@ private struct SettingsAccountCard: View {
                 // 5h Quota
                 VStack(alignment: .leading, spacing: 2) {
                     HStack {
-                        Text("5 Giờ")
+                        Text(L10n.tr("popover.5h_limit"))
                             .font(.system(size: 10.5, weight: .medium))
                             .foregroundColor(.secondary)
                         Spacer()
@@ -463,7 +464,7 @@ private struct SettingsAccountCard: View {
                 // Weekly Quota
                 VStack(alignment: .leading, spacing: 2) {
                     HStack {
-                        Text("Tuần")
+                        Text(L10n.tr("popover.weekly_limit"))
                             .font(.system(size: 10.5, weight: .medium))
                             .foregroundColor(.secondary)
                         Spacer()
@@ -481,7 +482,7 @@ private struct SettingsAccountCard: View {
             // Bottom Row: Model Info & Actions
             HStack {
                 HStack(spacing: 4) {
-                    Text("Model:")
+                    Text(L10n.tr("popover.model_label"))
                         .font(.system(size: 10.5))
                         .foregroundColor(.secondary)
 
@@ -523,6 +524,7 @@ private struct SettingsAccountCard: View {
                         }
                     }
                     .menuStyle(BorderlessButtonMenuStyle())
+                    .menuIndicator(.hidden)
                 }
 
                 Spacer()
@@ -545,7 +547,7 @@ private struct SettingsAccountCard: View {
                         Button(action: {
                             viewModel.onSetActiveAccount?(account.id)
                         }) {
-                            Text("Kích hoạt")
+                            Text(L10n.tr("settings.btn_activate"))
                                 .font(.system(size: 10, weight: .semibold))
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 2.5)
@@ -695,7 +697,7 @@ private struct RotationTabPane: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.primary)
 
-                Text("Tự động chuyển đổi tài khoản khi cạn token để bảo toàn luồng làm việc")
+                Text(L10n.tr("settings.rotation_subtitle"))
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
             }
@@ -834,7 +836,7 @@ private struct SystemTabPane: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.primary)
 
-                Text("Tùy biến ngôn ngữ, khởi động cùng hệ thống và thông báo đẩy")
+                Text(L10n.tr("settings.system_subtitle"))
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
             }
@@ -848,7 +850,7 @@ private struct SystemTabPane: View {
                             .font(.system(size: 12.5, weight: .semibold))
                             .foregroundColor(.primary)
 
-                        Text("Thay đổi tức thì mà không cần khởi động lại ứng dụng")
+                        Text(L10n.tr("settings.language_instant_note"))
                             .font(.system(size: 10.5))
                             .foregroundColor(.secondary)
                     }
@@ -1017,11 +1019,11 @@ private struct AboutTabPane: View {
                 .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.primary)
 
-            Text("Phiên bản 1.0.0 • Native Swift & AppKit")
+            Text(L10n.tr("about.app_version"))
                 .font(.system(size: 11.5))
                 .foregroundColor(.secondary)
 
-            Text("Ứng dụng Menu Bar mã nguồn mở tối ưu, tự động giám sát quota và xoay vòng tài khoản Google AI Pro / Ultra 24/7.")
+            Text(L10n.tr("about.app_desc"))
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -1030,7 +1032,7 @@ private struct AboutTabPane: View {
             // Info Card
             VStack(spacing: 6) {
                 HStack {
-                    Text("Tác giả:")
+                    Text(L10n.tr("about.author_label"))
                         .foregroundColor(.secondary)
                     Spacer()
                     Text("Happy Duong (phucduongqb@gmail.com)")
@@ -1038,7 +1040,7 @@ private struct AboutTabPane: View {
                 }
                 Divider().opacity(0.4)
                 HStack {
-                    Text("Giấy phép:")
+                    Text(L10n.tr("about.license_label"))
                         .foregroundColor(.secondary)
                     Spacer()
                     Text("MIT Open Source License")

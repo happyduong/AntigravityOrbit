@@ -387,7 +387,7 @@ public class StatusBarController: NSObject, NSPopoverDelegate {
         OAuthServer.shared.startLoginFlow { [weak self] success, message in
             DispatchQueue.main.async {
                 self?.showAlert(
-                    title: success ? "Thành công" : "Thông báo",
+                    title: success ? L10n.tr("alert.success") : L10n.tr("alert.notice"),
                     message: message,
                     style: success ? .informational : .warning
                 )
@@ -400,7 +400,11 @@ public class StatusBarController: NSObject, NSPopoverDelegate {
 
     @objc public func actionImportFromIde() {
         let result = AccountManager.shared.importFromCurrentIdeLogin()
-        showAlert(title: result.success ? "Thành công" : "Thông báo", message: result.message, style: result.success ? .informational : .warning)
+        showAlert(
+            title: result.success ? L10n.tr("alert.success") : L10n.tr("alert.notice"),
+            message: result.message,
+            style: result.success ? .informational : .warning
+        )
         if result.success {
             refreshQuotas()
         }
