@@ -41,6 +41,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Run as menu bar accessory (no dock icon)
         NSApplication.shared.setActivationPolicy(.accessory)
 
+        // Show tooltips instantly without default delay
+        UserDefaults.standard.register(defaults: [
+            "NSInitialToolTipDelay": 0
+        ])
+
         // Sync launch at login status with user configuration
         LaunchAtLoginManager.shared.syncWithConfig()
 

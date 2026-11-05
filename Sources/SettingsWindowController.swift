@@ -114,12 +114,6 @@ public class SettingsWindowController: NSObject, NSWindowDelegate {
             self?.onUpdateCallback?()
         }
 
-        viewModel.onSetPopoverLayoutStyle = { [weak self] style in
-            ConfigManager.shared.updatePopoverLayoutStyle(style)
-            self?.viewModel.syncFromConfig()
-            self?.onUpdateCallback?()
-        }
-
         viewModel.onOpenDesktopApp = {
             let appPath = "/Applications/Antigravity.app"
             NSWorkspace.shared.open(URL(fileURLWithPath: appPath))

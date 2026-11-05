@@ -249,21 +249,15 @@ public class LocalizationManager {
             "about.app_desc": "Optimized open-source Menu Bar app, automatically monitoring quotas and rotating Google AI Pro / Ultra accounts 24/7.",
             "about.author_label": "Author:",
             "about.license_label": "License:",
-            "settings.popover_style_section": "POPOVER APPEARANCE",
-            "settings.popover_style_title": "Popover Layout Style",
-            "settings.popover_style_subtitle": "Select your preferred layout and compactness for the status bar popover",
-            "layout.streamlined": "Streamlined (macOS Native)",
-            "layout.streamlined_desc": "Clean and glanceable, following macOS Control Center aesthetics.",
-            "layout.raycast": "Command Palette (Raycast)",
-            "layout.raycast_desc": "Developer-centric unified table list with interactive shortcut bar.",
-            "layout.radial": "Radial Mini-Widget",
-            "layout.radial_desc": "Compact circular gauge inspired by Apple Watch widgets.",
             "popover.active_badge": "ACTIVE",
             "popover.reset_in": "Reset in %@",
             "popover.next_candidate": "Next rotation candidate",
             "popover.auto_rotate_short": "Auto-Rotate (<%d%%)",
             "popover.rotate_now_short": "Rotate",
-            "popover.quick_switch": "QUICK SWITCH:"
+            "popover.quick_switch": "QUICK SWITCH:",
+            "popover.tooltip_refresh": "Refresh Quotas",
+            "popover.tooltip_settings": "Settings",
+            "popover.tooltip_quit": "Quit Orbit"
         ],
 
         // MARK: 2. Tiếng Việt
@@ -435,21 +429,15 @@ public class LocalizationManager {
             "about.app_desc": "Ứng dụng Menu Bar mã nguồn mở tối ưu, tự động giám sát quota và xoay vòng tài khoản Google AI Pro / Ultra 24/7.",
             "about.author_label": "Tác giả:",
             "about.license_label": "Giấy phép:",
-            "settings.popover_style_section": "GIAO DIỆN POPOVER",
-            "settings.popover_style_title": "Kiểu bố cục Popover",
-            "settings.popover_style_subtitle": "Tùy chọn phong cách hiển thị và độ tinh gọn của cửa sổ xem nhanh",
-            "layout.streamlined": "Tinh gọn (Chuẩn macOS)",
-            "layout.streamlined_desc": "Thiết kế hiện đại, thoáng mắt theo phong cách macOS Control Center.",
-            "layout.raycast": "Danh sách lệnh (Kiểu Raycast)",
-            "layout.raycast_desc": "Bảng so sánh tất cả tài khoản kèm thanh phím tắt phong cách Raycast.",
-            "layout.radial": "Đồng hồ tròn (Mini Widget)",
-            "layout.radial_desc": "Mặt đo hình tròn siêu gọn lấy cảm hứng từ Apple Watch.",
             "popover.active_badge": "ĐANG DÙNG",
             "popover.reset_in": "Reset sau %@",
             "popover.next_candidate": "Tài khoản kế tiếp",
             "popover.auto_rotate_short": "Tự xoay vòng (<%d%%)",
             "popover.rotate_now_short": "Xoay ngay",
-            "popover.quick_switch": "CHUYỂN NHANH:"
+            "popover.quick_switch": "CHUYỂN NHANH:",
+            "popover.tooltip_refresh": "Làm mới Quota",
+            "popover.tooltip_settings": "Cài đặt",
+            "popover.tooltip_quit": "Thoát Orbit"
         ],
 
         // MARK: 3. 简体中文 (Simplified Chinese)
@@ -620,7 +608,10 @@ public class LocalizationManager {
             "about.app_version": "版本 1.0.0 • 原生 Swift & AppKit",
             "about.app_desc": "优化的开源菜单栏应用，全天候自动监控配额并轮换 Google AI Pro / Ultra 账户。",
             "about.author_label": "作者：",
-            "about.license_label": "开源协议："
+            "about.license_label": "开源协议：",
+            "popover.tooltip_refresh": "刷新配额",
+            "popover.tooltip_settings": "设置",
+            "popover.tooltip_quit": "退出 Orbit"
         ],
 
         // MARK: 4. 日本語 (Japanese)
@@ -791,7 +782,10 @@ public class LocalizationManager {
             "about.app_version": "バージョン 1.0.0 • Native Swift & AppKit",
             "about.app_desc": "最適化されたオープンソースのメニューバーアプリ。24時間体制でクォータを監視し、Google AI Pro / Ultra アカウントを自動ローテーションします。",
             "about.author_label": "作成者:",
-            "about.license_label": "ライセンス:"
+            "about.license_label": "ライセンス:",
+            "popover.tooltip_refresh": "クォータを更新",
+            "popover.tooltip_settings": "設定",
+            "popover.tooltip_quit": "Orbit を終了"
         ],
 
         // MARK: 5. 한국어 (Korean)
@@ -962,7 +956,10 @@ public class LocalizationManager {
             "about.app_version": "버전 1.0.0 • Native Swift & AppKit",
             "about.app_desc": "최적화된 오픈 소스 메뉴 바 앱으로 Google AI Pro / Ultra 계정의 할당량을 24시간 모니터링하고 자동 순환합니다。",
             "about.author_label": "작성자:",
-            "about.license_label": "라이선스:"
+            "about.license_label": "라이선스:",
+            "popover.tooltip_refresh": "할당량 새로고침",
+            "popover.tooltip_settings": "설정",
+            "popover.tooltip_quit": "Orbit 종료"
         ],
 
         // MARK: 6. Español (Spanish)
@@ -1131,7 +1128,10 @@ public class LocalizationManager {
             "about.app_version": "Versión 1.0.0 • Nativo Swift y AppKit",
             "about.app_desc": "Aplicación de barra de menú de código abierto optimizada, monitorea cuotas y rota cuentas Google AI Pro / Ultra 24/7.",
             "about.author_label": "Autor:",
-            "about.license_label": "Licencia:"
+            "about.license_label": "Licencia:",
+            "popover.tooltip_refresh": "Actualizar cuotas",
+            "popover.tooltip_settings": "Configuración",
+            "popover.tooltip_quit": "Salir de Orbit"
         ],
 
         // MARK: 7. Français (French)
@@ -1300,7 +1300,10 @@ public class LocalizationManager {
             "about.app_version": "Version 1.0.0 • Natif Swift & AppKit",
             "about.app_desc": "Application de barre de menus open-source optimisée, surveillant les quotas et faisant pivoter les comptes Google AI Pro / Ultra 24/7.",
             "about.author_label": "Auteur :",
-            "about.license_label": "Licence :"
+            "about.license_label": "Licence :",
+            "popover.tooltip_refresh": "Actualiser les quotas",
+            "popover.tooltip_settings": "Paramètres",
+            "popover.tooltip_quit": "Quitter Orbit"
         ],
 
         // MARK: 8. Deutsch (German)
@@ -1469,7 +1472,10 @@ public class LocalizationManager {
             "about.app_version": "Version 1.0.0 • Native Swift & AppKit",
             "about.app_desc": "Optimierte Open-Source-Menüleisten-App zur kontinuierlichen Überwachung und Rotation von Google AI Pro / Ultra Konten.",
             "about.author_label": "Autor:",
-            "about.license_label": "Lizenz:"
+            "about.license_label": "Lizenz:",
+            "popover.tooltip_refresh": "Kontingente aktualisieren",
+            "popover.tooltip_settings": "Einstellungen",
+            "popover.tooltip_quit": "Orbit beenden"
         ],
 
         // MARK: 9. Português (Portuguese)
@@ -1638,7 +1644,10 @@ public class LocalizationManager {
             "about.app_version": "Versão 1.0.0 • Nativo Swift & AppKit",
             "about.app_desc": "Aplicativo de barra de menus de código aberto otimizado, monitora cotas e alterna contas Google AI Pro / Ultra 24/7.",
             "about.author_label": "Autor:",
-            "about.license_label": "Licença:"
+            "about.license_label": "Licença:",
+            "popover.tooltip_refresh": "Atualizar cotas",
+            "popover.tooltip_settings": "Configurações",
+            "popover.tooltip_quit": "Encerrar Orbit"
         ],
 
         // MARK: 10. Русский (Russian)
@@ -1807,7 +1816,10 @@ public class LocalizationManager {
             "about.app_version": "Версия 1.0.0 • Native Swift & AppKit",
             "about.app_desc": "Оптимизированное приложение панели меню с открытым исходным кодом, круглосуточный мониторинг квот и ротация аккаунтов Google AI Pro / Ultra.",
             "about.author_label": "Автор:",
-            "about.license_label": "Лицензия:"
+            "about.license_label": "Лицензия:",
+            "popover.tooltip_refresh": "Обновить квоты",
+            "popover.tooltip_settings": "Настройки",
+            "popover.tooltip_quit": "Выйти из Orbit"
         ]
     ]
 }

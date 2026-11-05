@@ -29,20 +29,6 @@ public class StatusBarController: NSObject, NSPopoverDelegate {
             name: .languageDidChange,
             object: nil
         )
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handlePopoverLayoutChange),
-            name: .popoverLayoutDidChange,
-            object: nil
-        )
-    }
-
-    @objc private func handlePopoverLayoutChange() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.viewModel.layoutStyle = ConfigManager.shared.config.popoverLayoutStyle
-            self.updatePopoverSize()
-        }
     }
 
     // MARK: - Setup Components
@@ -83,10 +69,6 @@ public class StatusBarController: NSObject, NSPopoverDelegate {
         }
         viewModel.onImportIde = { [weak self] in
             self?.actionImportFromIde()
-        }
-        viewModel.onSelectLayoutStyle = { [weak self] style in
-            ConfigManager.shared.updatePopoverLayoutStyle(style)
-            self?.handlePopoverLayoutChange()
         }
     }
 
