@@ -183,84 +183,51 @@ private struct ReusableModelSelectorMenu: View {
     @ObservedObject var viewModel: OrbitViewModel
 
     var body: some View {
-        Menu {
-            Button(action: {
-                viewModel.onSelectModel?(account.id, "")
-            }) {
-                HStack {
+        HStack(spacing: 4) {
+            Text(L10n.tr("popover.model_label"))
+                .font(.system(size: 10.5))
+                .foregroundColor(.secondary)
+
+            // Inline Model Menu
+            Menu {
+                Button(action: {
+                    viewModel.onSelectModel?(account.id, "")
+                }) {
                     Text(L10n.tr("model.auto"))
-                    if account.preferredModelId == nil || account.preferredModelId?.isEmpty == true {
-                        Text("✓")
-                    }
                 }
-            }
-
-            Divider()
-
-            Section("Google Gemini") {
-                ForEach(AIModelCatalog.geminiModels, id: \.id) { opt in
-                    Button(action: {
-                        viewModel.onSelectModel?(account.id, opt.id)
-                    }) {
-                        HStack {
+                Divider()
+                Section("Google Gemini") {
+                    ForEach(AIModelCatalog.geminiModels, id: \.id) { opt in
+                        Button(action: {
+                            viewModel.onSelectModel?(account.id, opt.id)
+                        }) {
                             Text(opt.displayName)
-                            if account.preferredModelId == opt.id {
-                                Text("✓")
-                            }
                         }
                     }
                 }
-            }
-
-            Divider()
-
-            Section("Anthropic Claude") {
-                ForEach(AIModelCatalog.claudeModels, id: \.id) { opt in
-                    Button(action: {
-                        viewModel.onSelectModel?(account.id, opt.id)
-                    }) {
-                        HStack {
+                Divider()
+                Section("Anthropic Claude") {
+                    ForEach(AIModelCatalog.claudeModels, id: \.id) { opt in
+                        Button(action: {
+                            viewModel.onSelectModel?(account.id, opt.id)
+                        }) {
                             Text(opt.displayName)
-                            if account.preferredModelId == opt.id {
-                                Text("✓")
-                            }
                         }
                     }
                 }
-            }
-
-            Divider()
-
-            Section(L10n.tr("model.group_other")) {
-                ForEach(AIModelCatalog.otherModels, id: \.id) { opt in
-                    Button(action: {
-                        viewModel.onSelectModel?(account.id, opt.id)
-                    }) {
-                        HStack {
-                            Text(opt.displayName)
-                            if account.preferredModelId == opt.id {
-                                Text("✓")
-                            }
-                        }
-                    }
+            } label: {
+                HStack(spacing: 3) {
+                    Text("🤖 \(account.displayModelName)")
+                        .font(.system(size: 10.5, weight: .medium))
+                        .lineLimit(1)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 7))
+                        .opacity(0.6)
                 }
             }
-        } label: {
-            HStack(spacing: 4) {
-                Text("🤖 \(account.displayModelName)")
-                    .font(.system(size: 11, weight: .medium))
-                    .lineLimit(1)
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 8))
-                    .opacity(0.6)
-            }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
-            .background(Color.secondary.opacity(0.12))
-            .cornerRadius(6)
+            .menuStyle(BorderlessButtonMenuStyle())
+            .menuIndicator(.hidden)
         }
-        .menuStyle(BorderlessButtonMenuStyle())
-        .menuIndicator(.hidden)
     }
 }
 
@@ -685,15 +652,9 @@ private struct StreamlinedActiveCard: View {
 
             // Model Selector Row
             HStack {
-                Text(L10n.tr("popover.model_label"))
-                    .font(.system(size: 10.5))
-                    .foregroundColor(.secondary)
-
-                Spacer()
-
                 ReusableModelSelectorMenu(account: account, viewModel: viewModel)
+                Spacer()
             }
-            .padding(.top, 1)
         }
         .padding(9)
         .background(Color(NSColor.textBackgroundColor).opacity(0.35))
