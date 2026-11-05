@@ -484,51 +484,7 @@ private struct SettingsAccountCard: View {
 
             // Bottom Row: Model Info & Actions
             HStack {
-                HStack(spacing: 4) {
-                    Text(L10n.tr("popover.model_label"))
-                        .font(.system(size: 10.5))
-                        .foregroundColor(.secondary)
-
-                    // Inline Model Menu
-                    Menu {
-                        Button(action: {
-                            viewModel.onSelectModel?(account.id, "")
-                        }) {
-                            Text(L10n.tr("model.auto"))
-                        }
-                        Divider()
-                        Section("Google Gemini") {
-                            ForEach(AIModelCatalog.geminiModels, id: \.id) { opt in
-                                Button(action: {
-                                    viewModel.onSelectModel?(account.id, opt.id)
-                                }) {
-                                    Text(opt.displayName)
-                                }
-                            }
-                        }
-                        Divider()
-                        Section("Anthropic Claude") {
-                            ForEach(AIModelCatalog.claudeModels, id: \.id) { opt in
-                                Button(action: {
-                                    viewModel.onSelectModel?(account.id, opt.id)
-                                }) {
-                                    Text(opt.displayName)
-                                }
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: 3) {
-                            Text("🤖 \(account.displayModelName)")
-                                .font(.system(size: 10.5, weight: .medium))
-                                .lineLimit(1)
-                            Image(systemName: "chevron.up.chevron.down")
-                                .font(.system(size: 7))
-                                .opacity(0.6)
-                        }
-                    }
-                    .menuStyle(BorderlessButtonMenuStyle())
-                    .menuIndicator(.hidden)
-                }
+                AccountModelSelectorMenu(account: account, onSelectModel: viewModel.onSelectModel)
 
                 Spacer()
 

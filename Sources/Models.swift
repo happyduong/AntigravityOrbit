@@ -272,7 +272,10 @@ public struct AccountStatus {
             return AIModelCatalog.displayName(forId: pref)
         }
         if isCurrent {
-            return activeModel ?? "Gemini 3.8 Flash (High)"
+            if let active = activeModel, !active.isEmpty {
+                return active
+            }
+            return L10n.tr("model.auto")
         }
         return L10n.tr("model.auto")
     }
@@ -283,6 +286,22 @@ public struct AccountStatus {
 
     public var isExhausted: Bool {
         return remainingPercentage <= 0
+    }
+
+    public func isModelSelected(_ modelId: String) -> Bool {
+        let currentPref = preferredModelId?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if modelId.isEmpty {
+            return currentPref.isEmpty
+        }
+        if currentPref.isEmpty {
+            return false
+        }
+        if currentPref == modelId {
+            return true
+        }
+        let formattedPref = QuotaService.shared.formatModelIdentifier(currentPref)
+        let formattedTarget = QuotaService.shared.formatModelIdentifier(modelId)
+        return !formattedPref.isEmpty && formattedPref == formattedTarget
     }
 
     public func displayName(showAlias: Bool) -> String {

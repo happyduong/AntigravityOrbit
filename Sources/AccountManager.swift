@@ -629,8 +629,12 @@ public class AccountManager {
 
         // If this is currently the active IDE account, apply model to antigravity_state.pbtxt immediately
         let activeId = accountsFileModel.current_ide_account_id ?? accountsFileModel.current_account_id ?? ""
-        if id == activeId, let m = cleanModel {
-            QuotaService.shared.applyAntigravityModel(modelId: m)
+        if id == activeId {
+            if let m = cleanModel {
+                QuotaService.shared.applyAntigravityModel(modelId: m)
+            } else {
+                QuotaService.shared.clearAntigravityModel()
+            }
         }
 
         if saveAccountsFile(accountsFileModel) {

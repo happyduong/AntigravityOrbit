@@ -178,11 +178,16 @@ public struct PopoverUIHelper {
 }
 
 // MARK: - Reusable Model Selector Menu
-private struct ReusableModelSelectorMenu: View {
+public struct AccountModelSelectorMenu: View {
     let account: AccountStatus
-    @ObservedObject var viewModel: OrbitViewModel
+    let onSelectModel: ((String, String) -> Void)?
 
-    var body: some View {
+    public init(account: AccountStatus, onSelectModel: ((String, String) -> Void)?) {
+        self.account = account
+        self.onSelectModel = onSelectModel
+    }
+
+    public var body: some View {
         HStack(spacing: 4) {
             Text(L10n.tr("popover.model_label"))
                 .font(.system(size: 10.5))
@@ -190,28 +195,65 @@ private struct ReusableModelSelectorMenu: View {
 
             // Inline Model Menu
             Menu {
-                Button(action: {
-                    viewModel.onSelectModel?(account.id, "")
-                }) {
-                    Text(L10n.tr("model.auto"))
+                Toggle(isOn: Binding(
+                    get: { account.isModelSelected("") },
+                    set: { _ in onSelectModel?(account.id, "") }
+                )) {
+                    if account.isCurrent, let active = account.activeModel, !active.isEmpty, account.isModelSelected("") {
+                        Text("\(L10n.tr("model.auto")) (\(active))")
+                            .font(.system(size: 10.5, weight: .medium))
+                    } else {
+                        Text(L10n.tr("model.auto"))
+                            .font(.system(size: 10.5, weight: .medium))
+                    }
                 }
-                Divider()
+
                 Section("Google Gemini") {
                     ForEach(AIModelCatalog.geminiModels, id: \.id) { opt in
-                        Button(action: {
-                            viewModel.onSelectModel?(account.id, opt.id)
-                        }) {
+                        Toggle(isOn: Binding(
+                            get: { account.isModelSelected(opt.id) },
+                            set: { _ in onSelectModel?(account.id, opt.id) }
+                        )) {
                             Text(opt.displayName)
+                                .font(.system(size: 10.5, weight: .medium))
                         }
                     }
                 }
-                Divider()
+
                 Section("Anthropic Claude") {
                     ForEach(AIModelCatalog.claudeModels, id: \.id) { opt in
-                        Button(action: {
-                            viewModel.onSelectModel?(account.id, opt.id)
-                        }) {
+                        Toggle(isOn: Binding(
+                            get: { account.isModelSelected(opt.id) },
+                            set: { _ in onSelectModel?(account.id, opt.id) }
+                        )) {
                             Text(opt.displayName)
+                                .font(.system(size: 10.5, weight: .medium))
+                        }
+                    }
+                }
+
+                Section(L10n.tr("model.group_other")) {
+                    ForEach(AIModelCatalog.otherModels, id: \.id) { opt in
+                        Toggle(isOn: Binding(
+                            get: { account.isModelSelected(opt.id) },
+                            set: { _ in onSelectModel?(account.id, opt.id) }
+                        )) {
+                            Text(opt.displayName)
+                                .font(.system(size: 10.5, weight: .medium))
+                        }
+                    }
+                }
+
+                if !account.isModelSelected(""),
+                   let customId = account.preferredModelId,
+                   !AIModelCatalog.allModels.contains(where: { account.isModelSelected($0.id) }) {
+                    Section(L10n.tr("model.group_other")) {
+                        Toggle(isOn: Binding(
+                            get: { true },
+                            set: { _ in onSelectModel?(account.id, customId) }
+                        )) {
+                            Text(AIModelCatalog.displayName(forId: customId))
+                                .font(.system(size: 10.5, weight: .medium))
                         }
                     }
                 }
@@ -228,6 +270,15 @@ private struct ReusableModelSelectorMenu: View {
             .menuStyle(BorderlessButtonMenuStyle())
             .menuIndicator(.hidden)
         }
+    }
+}
+
+private struct ReusableModelSelectorMenu: View {
+    let account: AccountStatus
+    @ObservedObject var viewModel: OrbitViewModel
+
+    var body: some View {
+        AccountModelSelectorMenu(account: account, onSelectModel: viewModel.onSelectModel)
     }
 }
 

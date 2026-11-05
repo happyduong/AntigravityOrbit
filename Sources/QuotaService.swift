@@ -247,10 +247,30 @@ public class QuotaService {
         print("[QuotaService] Applied model '\(cleanId)' to antigravity_state.pbtxt")
     }
 
+    public func clearAntigravityModel() {
+        let statePath = homeDir.appendingPathComponent(".gemini")
+            .appendingPathComponent("antigravity")
+            .appendingPathComponent("antigravity_state.pbtxt")
+
+        guard FileManager.default.fileExists(atPath: statePath.path),
+              let content = try? String(contentsOf: statePath, encoding: .utf8) else {
+            return
+        }
+
+        var lines = content.components(separatedBy: .newlines)
+        lines.removeAll(where: { $0.trimmingCharacters(in: .whitespaces).starts(with: "last_selected_agent_model:") })
+        let newContent = lines.joined(separator: "\n")
+        try? newContent.write(to: statePath, atomically: true, encoding: .utf8)
+        print("[QuotaService] Cleared model override in antigravity_state.pbtxt")
+    }
+
     public func getCurrentAntigravityModel() -> String {
         let raw = getRawAntigravityModelId()
         if !raw.isEmpty {
-            return formatModelIdentifier(raw)
+            let formatted = formatModelIdentifier(raw)
+            if !formatted.isEmpty {
+                return formatted
+            }
         }
         return "Gemini 3.8 Flash (High)"
     }
@@ -284,7 +304,7 @@ public class QuotaService {
             return "Claude Opus 5.5 (Medium)"
         default:
             if key.isEmpty {
-                return "Gemini 3.8 Flash (High)"
+                return ""
             }
             return key
         }
