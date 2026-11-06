@@ -493,12 +493,18 @@ private struct StandbyAccountTooltipView: View {
 }
 
 // MARK: - Quota Progress Bar
-private struct QuotaProgressBar: View {
-    let percentage: Int
-    let height: CGFloat
-    let tintColor: Color
+public struct QuotaProgressBar: View {
+    public let percentage: Int
+    public let height: CGFloat
+    public let tintColor: Color
 
-    var body: some View {
+    public init(percentage: Int, height: CGFloat, tintColor: Color) {
+        self.percentage = percentage
+        self.height = height
+        self.tintColor = tintColor
+    }
+
+    public var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 Capsule()

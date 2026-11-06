@@ -90,41 +90,76 @@ Nhấp vào icon Menu Bar để mở Popover Dashboard với hiệu ứng kính 
 
 ```text
 ┌────────────────────────────────────────────────────────┐
-│  ⚡ Antigravity Orbit                  [🔄]  [⚙️]  [✕]  │
+│ (Avt) Happy Duong           Google AI Pro  [🔄] [⚙️] [⎋]│
 ├────────────────────────────────────────────────────────┤
 │ ┌────────────────────────────────────────────────────┐ │
-│ │ ● ĐANG HOẠT ĐỘNG                     Google AI Pro │ │
-│ │ primary@gmail.com                                  │ │
-│ │                                                    │ │
-│ │ 5 Giờ   [████████████████░░░░]  85% (Reset: 1h 24m)│ │
-│ │ Tuần    [████████████████████]  98%                │ │
+│ │ 5 Giờ   [████████████████░░░░]  85% (Reset: 2h 15m)│ │
+│ │ Tuần    [████████████████████]  92% (Reset: 3d 14h)│ │
 │ │                                                    │ │
 │ │ Model: [ 🤖 Gemini 3.8 Flash (High)              ▾]│ │
 │ └────────────────────────────────────────────────────┘ │
 │                                                        │
 │ TÀI KHOẢN DỰ PHÒNG (2)                      Quản lý... │
 │ ┌────────────────────────────────────────────────────┐ │
-│ │ 🟢 secondary@gmail.com             92%     [Chuyển]│ │
-│ │    5h: 92% • Tuần: 100%                            │ │
+│ │ 🟢 (Avt) Secondary Account         96%             │ │
+│ │    5h: 96% • Tuần: 90%                             │ │
+│ ├────────────────────────────────────────────────────┤ │
+│ │ 🟡 (Avt) Backup Account            22%             │ │
+│ │    5h: 22% • Tuần: 45%                             │ │
 │ └────────────────────────────────────────────────────┘ │
 │                                                        │
-│ [ 🔄 Tự động xoay vòng khi ≤ 10%              [ ON ] ] │
-│ ┌────────────────────────────────────────────────────┐ │
-│ │              [ ⟳ Xoay vòng tài khoản ngay (⌘R) ]    │ │
-│ └────────────────────────────────────────────────────┘ │
+│ [ 🔄 Xoay vòng (⌘R) ]         Tự xoay vòng (<10%) [ON] │
 └────────────────────────────────────────────────────────┘
 ```
 
-* **Hero Card nổi bật**: Tài khoản active hiển thị dạng Card riêng biệt, tích hợp trực quan thanh tiến trình hạn mức 5h (kèm thời gian reset) và hạn mức tuần.
-* **1-Click Switching**: Đổi Model hoặc chuyển sang bất kỳ tài khoản dự phòng nào chỉ với 1 cú click (loại bỏ hoàn toàn ác mộng menu con đa tầng).
+* **Hero Card nổi bật**: Tài khoản active hiển thị dạng Card riêng biệt, tích hợp trực quan thanh tiến trình hạn mức 5h (kèm thời gian đếm ngược Reset) và hạn mức tuần.
+* **1-Click Switching**: Đổi Model hoặc nhấp vào bất kỳ tài khoản dự phòng nào để chuyển đổi tức thời (loại bỏ hoàn toàn ác mộng menu con đa tầng).
+* **Instant Tooltips**: Tooltip động có mũi tên (Dynamic Arrow Tooltip) phản hồi tức thì khi rê chuột lên các nút thanh công cụ và hàng tài khoản.
 
 ---
 
 ### 6. Cửa sổ Cài đặt Chuẩn macOS System Settings (Settings Window - `⌘,`)
 
-Giao diện cửa sổ native kích thước 760 x 560 px với bố cục **Split-View Sidebar** hiện đại chuẩn macOS Ventura, Sonoma và Sequoia:
+Giao diện cửa sổ native với bố cục **Split-View Sidebar** hiện đại chuẩn macOS Ventura, Sonoma và Sequoia (tối ưu kích thước linh hoạt từ 720 x 520 px, co giãn mượt mà trên màn hình nhỏ):
 
-#### 📁 Cột Sidebar Trái (Navigation)
+```text
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│  CÀI ĐẶT - TÀI KHOẢN (ACCOUNTS CONFIGURATION)                                          │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                        │
+│  Quản lý Tài khoản (3 tài khoản)             [⟳ Cập nhật Quota]  [+ Thêm tài khoản ▾]  │
+│  Theo dõi hạn ngạch thực tế và thiết lập thứ tự xoay vòng      [Toggle: Hiện Alias ✓]  │
+│                                                                                        │
+│  ────────────────────────────────────────────────────────────────────────────────────  │
+│                                                                                        │
+│  ⭐ TÀI KHOẢN ĐANG HOẠT ĐỘNG                             Tự động đồng bộ IDE & agy     │
+│  ┌──────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ (Avt)  Happy Duong (Work)  [Google AI Pro]               [🟢 ĐANG SỬ DỤNG]        │  │
+│  │        work.email@gmail.com                                                      │  │
+│  │                                                                                  │  │
+│  │  Hạn mức 5 giờ:                    Reset sau 2h 15m               85%            │  │
+│  │  [██████████████████████████████████████████░░░░░░░░] (Xanh lá)                  │  │
+│  │                                                                                  │  │
+│  │  Hạn mức Tuần:                     Reset sau 3d 14h               92%            │  │
+│  │  [████████████████████████████████████████████░░░░░░] (Xanh dương)               │  │
+│  │                                                                                  │  │
+│  │  Model: [ 🤖 Gemini 3.8 Flash (High) ▾]                     [✏️ Sửa tên gợi nhớ]  │  │
+│  └──────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                        │
+│  TÀI KHOẢN DỰ PHÒNG (2)                      🎯 Kế tiếp: Secondary • 96% token         │
+│  ┌──────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ 🟢 (Avt) Secondary Account       [Google AI Pro]       [⚡ Kích hoạt] [✏️] [🗑️]   │  │
+│  │          secondary@gmail.com                                                     │  │
+│  │  ──────────────────────────────────────────────────────────────────────────────  │  │
+│  │  Model: [ 🤖 Gemini 3.8 Flash ▾]       5h: 96% • 4h 10m       Tuần: 90% • 5d     │  │
+│  └──────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                        │
+│  💡 Cơ chế thông minh: Khi hạn ngạch 5h của tài khoản đang dùng xuống dưới ngưỡng cài   │
+│     đặt, hệ thống tự động xoay vòng sang tài khoản có hạn ngạch cao nhất.              │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 📁 Cột Sidebar Trái (Navigation - 200px)
 * 👥 **Tài khoản (Accounts)**: Quản lý danh sách tài khoản, thêm mới, phân quyền model (kèm badge đếm số lượng tài khoản theo thời gian thực).
 * 🔄 **Xoay vòng (Rotation)**: Cấu hình ngưỡng cảnh báo và tần suất quét hạn mức.
 * ⚙️ **Hệ thống (System)**: Ngôn ngữ hiển thị (10 ngôn ngữ), Khởi động cùng máy tính, Thông báo & Âm thanh.
@@ -132,17 +167,21 @@ Giao diện cửa sổ native kích thước 760 x 560 px với bố cục **Spl
 * **Service Status Indicator**: Đèn báo trạng thái kết nối Local Proxy `127.0.0.1:8045` luôn hiển thị trực quan ở góc dưới sidebar.
 
 #### 👥 Tab 1: Quản lý Tài khoản (Accounts)
-* **Thẻ Tài khoản Hiện đại (Account Cards)**:
-  * Mỗi tài khoản được hiển thị dạng Card bo góc sang trọng, phân biệt rõ tài khoản `● Đang hoạt động` và `○ Dự phòng`.
-  * Hiển thị thanh tiến trình hạn mức 5 giờ (kèm số % `SF Mono` đổi màu theo ngưỡng an toàn/cảnh báo/nguy hiểm) và hạn mức tuần.
-  * Tag gói dịch vụ nhận diện thực tế (`Google AI Pro`, `Google AI Ultra`, `Free`).
-  * Dropdown chọn nhanh Model AI ưu tiên trực tiếp trên thẻ.
-  * Nút thao tác nhanh trên từng thẻ: **Kích hoạt ngay**, **Sửa tên gợi nhớ (Alias)**, **Xoá tài khoản**.
-* **Thêm tài khoản 1-Click (+ MenuButton)**:
-  * **Đăng nhập Google OAuth (Browser)**: Mở trình duyệt web để đăng nhập Google OAuth an toàn.
-  * **Import từ Antigravity IDE**: Quét và tự động nạp tài khoản đang đăng nhập trong `~/.gemini`.
-  * **Import tệp JSON**: Nạp danh sách tài khoản từ file cấu hình bên ngoài.
-* **Cập nhật Quota**: Nút làm mới dữ liệu thủ công ngay trên thanh công cụ.
+* **Thẻ Hero Tài khoản Active (`SettingsActiveHeroCard`)**:
+  * Đặt trang trọng ở đầu trang với viền/nền xanh lá nổi bật, nhận diện tức thì tài khoản đang gánh tải.
+  * Hiển thị Avatar lớn (32px), Tên gợi nhớ, Tag gói (`Google AI Pro`, `Google AI Ultra`), Email và Badge trạng thái **`🟢 ĐANG SỬ DỤNG`**.
+  * **Thanh đo Quota đa tầng có Countdown Reset**: Hiển thị hạn mức 5h & Tuần với màu sắc đổi động theo ngưỡng cảnh báo, số % `SF Mono` sắc nét và **thời gian đếm ngược Reset** (`Reset sau 2h 15m`, `Reset sau 3d 14h`).
+  * Dropdown chọn AI Model trực tiếp kèm nút sửa tên gợi nhớ.
+* **Thẻ Tài khoản Dự phòng 2 Tầng (`SettingsStandbyAccountRow`)**:
+  * **Thiết kế tối ưu cho màn hình nhỏ**: Cấu trúc 2 tầng phân cấp rõ ràng, chống hiện tượng ngắt dòng text, rớt dấu `%` hay co cụm nút bấm trên các màn hình MacBook 13"/14".
+  * **Tầng 1 (Danh tính & Thao tác)**: Chấm đèn giao thông 🟢/🟡/🔴 + Avatar 26px + Tên tài khoản + Nhãn gói không rớt dòng + Email, cùng cụm nút hành động bên phải: Nút **`[⚡ Kích hoạt]`** cố định 1 dòng, nút **Sửa tên (✏️)** và **Xóa (🗑️)**.
+  * **Tầng 2 (Cấu hình & Chỉ số)**: Menu chọn Model AI ưu tiên (`🤖 Model ▾`) rộng rãi bên trái + Các badge hạn ngạch 5h & Tuần kèm thời gian đếm ngược Reset bên phải.
+* **Thanh công cụ Toolbar & Chỉ báo Trực quan**:
+  * **Nút Làm mới Quota**: Kèm hiệu ứng xoay 360° đồng bộ với Popover.
+  * **Menu Thêm tài khoản (+)**: Hỗ trợ Đăng nhập Google OAuth trình duyệt, Import từ Antigravity IDE, và Import từ tệp JSON.
+  * **Chú giải đèn trạng thái (Status Legend)**: Hướng dẫn nhanh quy ước màu quota (`>30%`, `≤30%`, `≤ngưỡng`).
+  * **Dự báo tài khoản kế tiếp**: Huy hiệu hiển thị tài khoản sẽ được ưu tiên chọn trong lượt xoay vòng tiếp theo.
+  * **Thẻ ghi chú thông minh (Smart Tip)**: Giải thích cơ chế tự động xoay vòng ở cuối danh sách.
 
 #### 🔄 Tab 2: Xoay vòng (Rotation)
 * **Tự động xoay vòng tài khoản**: Công tắc Native Switch bật/tắt tính năng xoay vòng thông minh khi chạm ngưỡng.
@@ -240,8 +279,8 @@ Mở menu bar -> chọn **Cài đặt tài khoản...** (hoặc bấm `⌘,` -> 
 
 ### 2. Kích hoạt và Xoay vòng tài khoản
 * **Kích hoạt thủ công**:
-  * Nhấp trực tiếp vào tên tài khoản trên thanh Menu Bar, hoặc:
-  * Trong bảng Cài đặt Tài khoản, nhấp đúp vào dòng tài khoản (hoặc chọn dòng rồi bấm **Kích hoạt tài khoản này**).
+  * Nhấp trực tiếp vào tên tài khoản trên thanh Menu Bar Popover, hoặc:
+  * Trong bảng Cài đặt Tài khoản, bấm nút **⚡ Kích hoạt** (Activate) nhanh 1-click trên thẻ tài khoản dự phòng.
 * **Xoay vòng ngay lập tức**:
   * Nhấn tổ hợp phím `⌘R` ở bất kỳ lúc nào để chuyển ngay sang tài khoản tiếp theo.
 * **Xoay vòng tự động**:
