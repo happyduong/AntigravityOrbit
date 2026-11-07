@@ -132,7 +132,7 @@ Giao diện cửa sổ native với bố cục **Split-View Sidebar** hiện đ�
 │                                                                                        │
 │  ────────────────────────────────────────────────────────────────────────────────────  │
 │                                                                                        │
-│  ⭐ TÀI KHOẢN ĐANG HOẠT ĐỘNG                             Tự động đồng bộ IDE & agy     │
+│  ⭐ TÀI KHOẢN ĐANG HOẠT ĐỘNG                                                           │
 │  ┌──────────────────────────────────────────────────────────────────────────────────┐  │
 │  │ (Avt)  Happy Duong (Work)  [Google AI Pro]               [🟢 ĐANG SỬ DỤNG]        │  │
 │  │        work.email@gmail.com                                                      │  │
@@ -146,7 +146,7 @@ Giao diện cửa sổ native với bố cục **Split-View Sidebar** hiện đ�
 │  │  Model: [ 🤖 Gemini 3.8 Flash (High) ▾]                     [✏️ Sửa tên gợi nhớ]  │  │
 │  └──────────────────────────────────────────────────────────────────────────────────┘  │
 │                                                                                        │
-│  TÀI KHOẢN DỰ PHÒNG (2)                      🎯 Kế tiếp: Secondary • 96% token         │
+│  TÀI KHOẢN DỰ PHÒNG (2)                                                               │
 │  ┌──────────────────────────────────────────────────────────────────────────────────┐  │
 │  │ 🟢 (Avt) Secondary Account       [Google AI Pro]       [⚡ Kích hoạt] [✏️] [🗑️]   │  │
 │  │          secondary@gmail.com                                                     │  │

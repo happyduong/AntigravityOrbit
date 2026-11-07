@@ -294,10 +294,14 @@ public enum TooltipArrowPosition: Sendable {
     case trailing
 }
 
-private struct TooltipArrowShape: Shape {
+public struct TooltipArrowShape: Shape {
     let direction: TooltipArrowDirection
 
-    func path(in rect: CGRect) -> Path {
+    public init(direction: TooltipArrowDirection) {
+        self.direction = direction
+    }
+
+    public func path(in rect: CGRect) -> Path {
         var path = Path()
         switch direction {
         case .up:
@@ -315,10 +319,14 @@ private struct TooltipArrowShape: Shape {
     }
 }
 
-private struct TooltipArrowBorder: Shape {
+public struct TooltipArrowBorder: Shape {
     let direction: TooltipArrowDirection
 
-    func path(in rect: CGRect) -> Path {
+    public init(direction: TooltipArrowDirection) {
+        self.direction = direction
+    }
+
+    public func path(in rect: CGRect) -> Path {
         var path = Path()
         switch direction {
         case .up:
@@ -334,15 +342,20 @@ private struct TooltipArrowBorder: Shape {
     }
 }
 
-private struct TooltipArrowView: View {
-    let direction: TooltipArrowDirection
-    let position: TooltipArrowPosition
+public struct TooltipArrowView: View {
+    public let direction: TooltipArrowDirection
+    public let position: TooltipArrowPosition
 
     private let arrowWidth: CGFloat = 8
     private let arrowHeight: CGFloat = 4
     private let sideInset: CGFloat = 7
 
-    var body: some View {
+    public init(direction: TooltipArrowDirection, position: TooltipArrowPosition) {
+        self.direction = direction
+        self.position = position
+    }
+
+    public var body: some View {
         HStack(spacing: 0) {
             if position == .trailing || position == .center {
                 Spacer(minLength: 0)
@@ -367,12 +380,18 @@ private struct TooltipArrowView: View {
 }
 
 // MARK: - Dynamic Arrow Tooltip View
-private struct DynamicArrowTooltipView: View {
-    let text: String
-    let arrowDirection: TooltipArrowDirection
-    let arrowPosition: TooltipArrowPosition
+public struct DynamicArrowTooltipView: View {
+    public let text: String
+    public let arrowDirection: TooltipArrowDirection
+    public let arrowPosition: TooltipArrowPosition
 
-    var body: some View {
+    public init(text: String, arrowDirection: TooltipArrowDirection, arrowPosition: TooltipArrowPosition) {
+        self.text = text
+        self.arrowDirection = arrowDirection
+        self.arrowPosition = arrowPosition
+    }
+
+    public var body: some View {
         VStack(spacing: 0) {
             if arrowDirection == .up {
                 TooltipArrowView(direction: .up, position: arrowPosition)
@@ -620,7 +639,7 @@ private struct StreamlinedHeader: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(PlainButtonStyle())
-                .instantTooltip(.refresh, text: L10n.tr("popover.tooltip_refresh"), viewModel: viewModel)
+                .instantTooltip(.refresh, text: L10n.tr("popover.tooltip_refresh"), viewModel: viewModel, alignment: .bottomTrailing, offsetY: 22)
 
                 // Settings Button
                 Button(action: {
@@ -633,7 +652,7 @@ private struct StreamlinedHeader: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(PlainButtonStyle())
-                .instantTooltip(.settings, text: L10n.tr("popover.tooltip_settings"), viewModel: viewModel)
+                .instantTooltip(.settings, text: L10n.tr("popover.tooltip_settings"), viewModel: viewModel, alignment: .bottomTrailing, offsetY: 22)
 
                 // Quit Button
                 Button(action: {
@@ -647,7 +666,7 @@ private struct StreamlinedHeader: View {
                         .scaleEffect(x: -1)
                 }
                 .buttonStyle(PlainButtonStyle())
-                .instantTooltip(.quit, text: L10n.tr("popover.tooltip_quit"), viewModel: viewModel, alignment: .bottomTrailing)
+                .instantTooltip(.quit, text: L10n.tr("popover.tooltip_quit"), viewModel: viewModel, alignment: .bottomTrailing, offsetY: 22)
             }
         }
     }

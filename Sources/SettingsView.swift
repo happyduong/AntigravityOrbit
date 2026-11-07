@@ -49,6 +49,7 @@ public class SettingsViewModel: ObservableObject {
     @Published public var soundEnabled: Bool = ConfigManager.shared.config.soundEnabled
     @Published public var currentLanguage: AppLanguage = LocalizationManager.shared.currentLanguage
     @Published public var hoveredAccountId: String? = nil
+    @Published public var activeTooltip: String? = nil
     @Published public var spinDegree: Double = 0
 
     // Action Closures
@@ -416,19 +417,11 @@ private struct AccountsTabPane: View {
                         // Section 1: Active Account (Hero Card)
                         if let active = viewModel.activeAccount {
                             VStack(alignment: .leading, spacing: 6) {
-                                HStack {
-                                    Text("⭐ " + L10n.tr("settings.sub_active").uppercased())
-                                        .font(.system(size: 10, weight: .bold))
-                                        .foregroundColor(.secondary)
-                                        .tracking(0.6)
-
-                                    Spacer()
-
-                                    Text(L10n.tr("settings.proxy_status_desc"))
-                                        .font(.system(size: 9.5))
-                                        .foregroundColor(.green)
-                                }
-                                .padding(.horizontal, 2)
+                                Text("⭐ " + L10n.tr("settings.sub_active").uppercased())
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.secondary)
+                                    .tracking(0.6)
+                                    .padding(.horizontal, 2)
 
                                 SettingsActiveHeroCard(account: active, viewModel: viewModel)
                             }
@@ -437,25 +430,11 @@ private struct AccountsTabPane: View {
                         // Section 2: Standby Accounts
                         if !viewModel.standbyAccounts.isEmpty {
                             VStack(alignment: .leading, spacing: 6) {
-                                HStack {
-                                    Text(L10n.tr("popover.standby_accounts", viewModel.standbyAccounts.count))
-                                        .font(.system(size: 10, weight: .bold))
-                                        .foregroundColor(.secondary)
-                                        .tracking(0.6)
-
-                                    Spacer()
-
-                                    if let next = viewModel.nextRotationAccount {
-                                        Text(String(format: L10n.tr("popover.next_preview"), next.displayName(showAlias: viewModel.showAccountAlias), next.gemini5hPercentage ?? next.remainingPercentage))
-                                            .font(.system(size: 9.5, weight: .medium))
-                                            .padding(.horizontal, 6)
-                                            .padding(.vertical, 2)
-                                            .background(Color.blue.opacity(0.12))
-                                            .foregroundColor(.blue)
-                                            .cornerRadius(4)
-                                    }
-                                }
-                                .padding(.horizontal, 2)
+                                Text(L10n.tr("popover.standby_accounts", viewModel.standbyAccounts.count))
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.secondary)
+                                    .tracking(0.6)
+                                    .padding(.horizontal, 2)
 
                                 VStack(spacing: 6) {
                                     ForEach(viewModel.standbyAccounts, id: \.id) { acc in
@@ -466,7 +445,7 @@ private struct AccountsTabPane: View {
                         }
 
                         // Section 3: Smart Tip Card
-                        HStack(alignment: .top, spacing: 8) {
+                        HStack(alignment: .center, spacing: 8) {
                             Text("💡")
                                 .font(.system(size: 12))
                             Text(L10n.tr("settings.rotation_note"))
@@ -507,54 +486,41 @@ private struct SettingsActiveHeroCard: View {
                     size: 32
                 )
 
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Text(account.displayName(showAlias: viewModel.showAccountAlias))
-                            .font(.system(size: 13.5, weight: .bold))
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(account.displayName(showAlias: viewModel.showAccountAlias))
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
 
-                        Text(account.displayTierName)
-                            .font(.system(size: 9.5, weight: .semibold))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 1.5)
-                            .background(Color.secondary.opacity(0.18))
-                            .foregroundColor(.secondary)
-                            .cornerRadius(5)
-                            .lineLimit(1)
-                            .fixedSize(horizontal: true, vertical: false)
-                    }
-
-                    if viewModel.showAccountAlias || account.name != account.email {
-                        Text(account.email)
-                            .font(.system(size: 10.5))
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-
-                Spacer()
-
-                // Active Status Pill with Indicator Dot
-                HStack(spacing: 5) {
-                    Circle()
-                        .fill(Color.green)
-                        .frame(width: 7, height: 7)
-
-                    Text(L10n.tr("settings.sub_active").uppercased())
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.green)
+                    Text(account.displayTierName)
+                        .font(.system(size: 9, weight: .semibold))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(Color.secondary.opacity(0.18))
+                        .foregroundColor(.secondary)
+                        .cornerRadius(4)
                         .lineLimit(1)
                         .fixedSize(horizontal: true, vertical: false)
                 }
-                .padding(.horizontal, 9)
-                .padding(.vertical, 4)
-                .background(Color.green.opacity(0.15))
-                .cornerRadius(6)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.green.opacity(0.3), lineWidth: 0.5)
-                )
+                .help(account.email)
+
+                Spacer()
+
+                Button(action: {
+                    viewModel.onEditAlias?(account)
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 9.5))
+                        Text(L10n.tr("settings.btn_edit_alias").replacingOccurrences(of: "...", with: ""))
+                            .font(.system(size: 10.5))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3.5)
+                    .background(Color.secondary.opacity(0.12))
+                    .cornerRadius(5)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
 
             // Middle: Dual Progress Bars with Countdown Reset Time
@@ -624,22 +590,6 @@ private struct SettingsActiveHeroCard: View {
                 AccountModelSelectorMenu(account: account, onSelectModel: viewModel.onSelectModel)
 
                 Spacer()
-
-                Button(action: {
-                    viewModel.onEditAlias?(account)
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 9.5))
-                        Text(L10n.tr("settings.btn_edit_alias").replacingOccurrences(of: "...", with: ""))
-                            .font(.system(size: 10.5))
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3.5)
-                    .background(Color.secondary.opacity(0.12))
-                    .cornerRadius(5)
-                }
-                .buttonStyle(PlainButtonStyle())
             }
         }
         .padding(12)
@@ -653,6 +603,77 @@ private struct SettingsActiveHeroCard: View {
 
     private var pct5h: Int {
         return account.gemini5hPercentage ?? account.remainingPercentage
+    }
+}
+
+// MARK: - Settings Arrow Tooltip ViewModifier
+private struct SettingsTooltipModifier: ViewModifier {
+    let tooltipId: String
+    let text: String
+    let alignment: Alignment
+    let offsetY: CGFloat
+    @ObservedObject var viewModel: SettingsViewModel
+
+    private var arrowDirection: TooltipArrowDirection {
+        return offsetY < 0 ? .down : .up
+    }
+
+    private var arrowPosition: TooltipArrowPosition {
+        if alignment == .bottomTrailing || alignment == .topTrailing || alignment == .trailing {
+            return .trailing
+        } else if alignment == .bottomLeading || alignment == .topLeading || alignment == .leading {
+            return .leading
+        } else {
+            return .center
+        }
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    if hovering {
+                        viewModel.activeTooltip = tooltipId
+                    } else if viewModel.activeTooltip == tooltipId {
+                        viewModel.activeTooltip = nil
+                    }
+                }
+            }
+            .overlay(
+                Group {
+                    if viewModel.activeTooltip == tooltipId {
+                        DynamicArrowTooltipView(
+                            text: text,
+                            arrowDirection: arrowDirection,
+                            arrowPosition: arrowPosition
+                        )
+                        .offset(y: offsetY)
+                        .transition(.opacity)
+                        .zIndex(999)
+                    }
+                },
+                alignment: alignment
+            )
+    }
+}
+
+private extension View {
+    func settingsTooltip(
+        id: String,
+        text: String,
+        viewModel: SettingsViewModel,
+        alignment: Alignment = .bottomTrailing,
+        offsetY: CGFloat = 22
+    ) -> some View {
+        self.modifier(
+            SettingsTooltipModifier(
+                tooltipId: id,
+                text: text,
+                alignment: alignment,
+                offsetY: offsetY,
+                viewModel: viewModel
+            )
+        )
     }
 }
 
@@ -682,30 +703,24 @@ private struct SettingsStandbyAccountRow: View {
                     size: 26
                 )
 
-                // Name & Tier Pill, with Email underneath
-                VStack(alignment: .leading, spacing: 1.5) {
-                    HStack(spacing: 6) {
-                        Text(account.displayName(showAlias: viewModel.showAccountAlias))
-                            .font(.system(size: 12.5, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
-
-                        Text(account.displayTierName)
-                            .font(.system(size: 9, weight: .medium))
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(Color.secondary.opacity(0.16))
-                            .foregroundColor(.secondary)
-                            .cornerRadius(4)
-                            .lineLimit(1)
-                            .fixedSize(horizontal: true, vertical: false)
-                    }
-
-                    Text(account.email)
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
+                // Name & Tier Pill underneath
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(account.displayName(showAlias: viewModel.showAccountAlias))
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.primary)
                         .lineLimit(1)
+
+                    Text(account.displayTierName)
+                        .font(.system(size: 8.5, weight: .medium))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(Color.secondary.opacity(0.16))
+                        .foregroundColor(.secondary)
+                        .cornerRadius(4)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
+                .help(account.email)
 
                 Spacer(minLength: 12)
 
@@ -742,9 +757,16 @@ private struct SettingsStandbyAccountRow: View {
                             .frame(width: 24, height: 24)
                             .background(Color.secondary.opacity(0.12))
                             .cornerRadius(5)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(PlainButtonStyle())
-                    .help(L10n.tr("settings.btn_edit_alias").replacingOccurrences(of: "...", with: ""))
+                    .settingsTooltip(
+                        id: "edit_\(account.id)",
+                        text: L10n.tr("settings.btn_edit_alias").replacingOccurrences(of: "...", with: ""),
+                        viewModel: viewModel,
+                        alignment: .bottomTrailing,
+                        offsetY: 22
+                    )
 
                     // Delete Account Button
                     Button(action: {
@@ -756,9 +778,16 @@ private struct SettingsStandbyAccountRow: View {
                             .frame(width: 24, height: 24)
                             .background(Color.red.opacity(0.1))
                             .cornerRadius(5)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(PlainButtonStyle())
-                    .help(L10n.tr("settings.btn_delete_account"))
+                    .settingsTooltip(
+                        id: "delete_\(account.id)",
+                        text: L10n.tr("settings.btn_delete_account").replacingOccurrences(of: "🗑️ ", with: "").replacingOccurrences(of: "🗑️", with: ""),
+                        viewModel: viewModel,
+                        alignment: .bottomTrailing,
+                        offsetY: 22
+                    )
                 }
                 .fixedSize(horizontal: true, vertical: false)
             }
@@ -829,6 +858,7 @@ private struct SettingsStandbyAccountRow: View {
                 .stroke(Color(NSColor.separatorColor).opacity(isHovered ? 0.6 : 0.35), lineWidth: 0.5)
         )
         .contentShape(Rectangle())
+        .zIndex(isHovered ? 10 : 1)
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.1)) {
                 if hovering {
@@ -1024,20 +1054,22 @@ private struct RotationTabPane: View {
             )
 
             // Rotation Note Card
-            HStack(alignment: .top, spacing: 8) {
-                Image(systemName: "info.circle")
-                    .foregroundColor(.secondary)
+            HStack(alignment: .center, spacing: 8) {
+                Text("💡")
                     .font(.system(size: 12))
-                    .padding(.top, 1)
-
                 Text(L10n.tr("settings.rotation_note"))
-                    .font(.system(size: 11))
+                    .font(.system(size: 10.5))
                     .foregroundColor(.secondary)
+                    .lineLimit(3)
             }
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.secondary.opacity(0.06))
             .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color(NSColor.separatorColor).opacity(0.25), lineWidth: 0.5)
+            )
 
             Spacer()
         }
