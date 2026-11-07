@@ -200,32 +200,6 @@ private struct SettingsSidebarView: View {
             }
 
             Spacer()
-
-            // Service Status Card at Bottom of Sidebar
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 5) {
-                    Circle()
-                        .fill(Color.green)
-                        .frame(width: 6, height: 6)
-
-                    Text("Local Proxy 8045")
-                        .font(.system(size: 10.5, weight: .semibold))
-                        .foregroundColor(.primary)
-                }
-
-                Text(L10n.tr("settings.proxy_status_desc"))
-                    .font(.system(size: 9.5))
-                    .foregroundColor(.secondary)
-            }
-            .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color(NSColor.separatorColor).opacity(0.4), lineWidth: 0.5)
-            )
-            .padding(10)
         }
     }
 }

@@ -164,7 +164,6 @@ Giao diện cửa sổ native với bố cục **Split-View Sidebar** hiện đ�
 * 🔄 **Xoay vòng (Rotation)**: Cấu hình ngưỡng cảnh báo và tần suất quét hạn mức.
 * ⚙️ **Hệ thống (System)**: Ngôn ngữ hiển thị (10 ngôn ngữ), Khởi động cùng máy tính, Thông báo & Âm thanh.
 * ℹ️ **Thông tin (About)**: Phiên bản, tác giả, giấy phép mã nguồn mở MIT và mã nguồn dự án.
-* **Service Status Indicator**: Đèn báo trạng thái kết nối Local Proxy `127.0.0.1:8045` luôn hiển thị trực quan ở góc dưới sidebar.
 
 #### 👥 Tab 1: Quản lý Tài khoản (Accounts)
 * **Thẻ Hero Tài khoản Active (`SettingsActiveHeroCard`)**:
